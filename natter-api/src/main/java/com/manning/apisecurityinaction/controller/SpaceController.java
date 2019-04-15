@@ -26,13 +26,15 @@ public class SpaceController {
       var spaceId = firstLong(stmt.executeQuery(
           "SELECT NEXT VALUE FOR space_id_seq;"));
 
-      // WARNING: this next line of code contains a // security vulnerability!
-      stmt.executeUpdate(
+      var insertStmt = conn.prepareStatement(
           "INSERT INTO spaces(space_id, name, owner) " +
-              "VALUES(" + spaceId + ", '" + spaceName +
-              "', '" + owner + "');");
-
+              "VALUES(?, ?, ?);");
+      insertStmt.setLong(1, spaceId);
+      insertStmt.setString(2, spaceName);
+      insertStmt.setString(3, owner);
+      insertStmt.executeUpdate();
       conn.commit();
+
       response.status(201);
       response.header("Location", "/spaces/" + spaceId);
 
