@@ -26,9 +26,14 @@ public class Main {
         var spaceController = new SpaceController(database);
 
         post("/spaces", spaceController::createSpace);
-        afterAfter((request, response) -> {
+        after((request, response) -> {
             response.type("application/json");
+        });
+        afterAfter((request, response) -> {
             response.header("Server", "");
+
+            // Temporarily disable browser XSS protections
+            response.header("X-XSS-Protection", "0");
         });
 
         internalServerError(new JSONObject()
@@ -43,7 +48,7 @@ public class Main {
   private static void badRequest(Exception ex,
       Request request, Response response) {
     response.status(400);
-    response.body(new JSONObject().put("error", ex.getMessage()).toString());
+    response.body("{\"error\":\"" + ex.getMessage() + "\"}");
   }
 
     private static void createTables(Connection connection) throws Exception {
