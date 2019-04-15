@@ -5,6 +5,7 @@ import static spark.Spark.*;
 import java.nio.file.*;
 import java.sql.Connection;
 
+import org.dalesbred.Database;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONObject;
 
@@ -19,8 +20,8 @@ public class Main {
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
 
-        var spaceController =
-            new SpaceController(datasource);
+        var database = Database.forDataSource(datasource);
+        var spaceController = new SpaceController(database);
 
         post("/spaces", spaceController::createSpace);
         afterAfter((request, response) -> {
