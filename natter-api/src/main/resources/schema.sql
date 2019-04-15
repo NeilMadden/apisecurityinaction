@@ -17,3 +17,4 @@ CREATE UNIQUE INDEX space_name_idx ON spaces(name);
 
 CREATE USER natter_api_user PASSWORD 'password';
 GRANT SELECT, INSERT ON spaces, messages TO natter_api_user;
+GRANT DELETE ON messages TO natter_api_user;

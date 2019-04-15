@@ -10,7 +10,7 @@ import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
 
-import com.manning.apisecurityinaction.controller.SpaceController;
+import com.manning.apisecurityinaction.controller.*;
 
 import spark.*;
 
@@ -40,6 +40,11 @@ public class Main {
         get("/spaces/:spaceId/messages/:msgId",
             spaceController::readMessage);
         get("/spaces/:spaceId/messages", spaceController::findMessages);
+
+        var moderatorController =
+            new ModeratorController(database);
+        delete("/spaces/:spaceId/messages/:msgId",
+            moderatorController::deletePost);
 
         afterAfter((request, response) -> {
             response.type("application/json");
