@@ -25,15 +25,23 @@ public class Main {
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
 
-        post("/spaces", spaceController::createSpace);
-        after((request, response) -> {
-            response.type("application/json");
-        });
-        afterAfter((request, response) -> {
-            response.header("Server", "");
+        before(((request, response) -> {
+            if (request.requestMethod().equals("POST") &&
+            !"application/json".equals(request.contentType())) {
+                halt(406, new JSONObject().put(
+                    "error", "Only application/json supported"
+                ).toString());
+            }
+        }));
 
-            // Temporarily disable browser XSS protections
-            response.header("X-XSS-Protection", "0");
+        post("/spaces", spaceController::createSpace);
+
+        afterAfter((request, response) -> {
+            response.type("application/json");
+            response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-XSS-Protection", "1; mode=block");
+            response.header("Cache-Control", "private, max-age=0");
+            response.header("Server", "");
         });
 
         internalServerError(new JSONObject()
@@ -48,7 +56,7 @@ public class Main {
   private static void badRequest(Exception ex,
       Request request, Response response) {
     response.status(400);
-    response.body("{\"error\":\"" + ex.getMessage() + "\"}");
+    response.body(new JSONObject().put("error", ex.getMessage()).toString());
   }
 
     private static void createTables(Connection connection) throws Exception {
