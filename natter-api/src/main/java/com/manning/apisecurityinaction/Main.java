@@ -16,6 +16,8 @@ public class Main {
         var datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter", "password");
         createTables(datasource.getConnection());
+        datasource = JdbcConnectionPool.create(
+            "jdbc:h2:mem:natter", "natter_api_user", "password");
 
         var spaceController =
             new SpaceController(datasource);
