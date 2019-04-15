@@ -1,9 +1,11 @@
 package com.manning.apisecurityinaction.controller;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.stream.Collectors;
 
 import org.dalesbred.Database;
-import org.json.JSONObject;
+import org.json.*;
 
 import spark.*;
 
@@ -82,6 +84,24 @@ public class SpaceController {
 
     response.status(200);
     return message;
+  }
+
+  public JSONArray findMessages(Request request, Response response) {
+    var since = Instant.now().minus(1, ChronoUnit.DAYS);
+    if (request.queryParams("since") != null) {
+      since = Instant.parse(request.queryParams("since"));
+    }
+    var spaceId = Long.parseLong(request.params(":spaceId"));
+
+    var messages = database.findAll(Long.class,
+        "SELECT msg_id FROM messages " +
+            "WHERE space_id = ? AND msg_time >= ?;",
+        spaceId, since);
+
+    response.status(200);
+    return new JSONArray(messages.stream()
+        .map(msgId -> "/spaces/" + spaceId + "/messages/" + msgId)
+        .collect(Collectors.toList()));
   }
 
   public static class Message {

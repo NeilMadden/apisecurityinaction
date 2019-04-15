@@ -39,6 +39,7 @@ public class Main {
         post("/spaces/:spaceId/messages", spaceController::postMessage);
         get("/spaces/:spaceId/messages/:msgId",
             spaceController::readMessage);
+        get("/spaces/:spaceId/messages", spaceController::findMessages);
 
         afterAfter((request, response) -> {
             response.type("application/json");
