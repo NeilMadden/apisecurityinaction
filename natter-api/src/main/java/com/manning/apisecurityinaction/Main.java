@@ -6,6 +6,7 @@ import java.nio.file.*;
 import java.sql.Connection;
 
 import org.dalesbred.Database;
+import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
 
@@ -36,6 +37,8 @@ public class Main {
 
         post("/spaces", spaceController::createSpace);
         post("/spaces/:spaceId/messages", spaceController::postMessage);
+        get("/spaces/:spaceId/messages/:msgId",
+            spaceController::readMessage);
 
         afterAfter((request, response) -> {
             response.type("application/json");
@@ -52,6 +55,8 @@ public class Main {
 
         exception(IllegalArgumentException.class, Main::badRequest);
         exception(JSONException.class, Main::badRequest);
+        exception(EmptyResultException.class,
+            (e, request, response) -> response.status(404));
     }
 
   private static void badRequest(Exception ex,
