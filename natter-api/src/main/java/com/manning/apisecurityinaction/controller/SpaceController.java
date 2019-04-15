@@ -40,4 +40,33 @@ public class SpaceController {
 
     });
   }
+
+  public JSONObject postMessage(Request request, Response response) {
+    var spaceId = Long.parseLong(request.params(":spaceId"));
+    var json = new JSONObject(request.body());
+    var user = json.getString("author");
+    if (!user.matches("[a-zA-Z][a-zA-Z0-9]{0,29}")) {
+      throw new IllegalArgumentException("invalid username");
+    }
+    var message = json.getString("message");
+    if (message.length() > 1024) {
+      throw new IllegalArgumentException("message is too long");
+    }
+
+    return database.withTransaction(tx -> {
+      var msgId = database.findUniqueLong(
+          "SELECT NEXT VALUE FOR msg_id_seq;");
+      database.updateUnique(
+          "INSERT INTO messages(space_id, msg_id, msg_time," +
+              "author, msg_text) " +
+              "VALUES(?, ?, current_timestamp, ?, ?)",
+          spaceId, msgId, user, message);
+
+      response.status(201);
+      var uri = "/spaces/" + spaceId + "/messages/" + msgId;
+      response.header("Location", uri);
+      return new JSONObject().put("uri", uri);
+    });
+  }
+
 }

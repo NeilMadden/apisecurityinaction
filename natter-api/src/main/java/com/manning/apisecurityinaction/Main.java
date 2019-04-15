@@ -35,6 +35,7 @@ public class Main {
         }));
 
         post("/spaces", spaceController::createSpace);
+        post("/spaces/:spaceId/messages", spaceController::postMessage);
 
         afterAfter((request, response) -> {
             response.type("application/json");
