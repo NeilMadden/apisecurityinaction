@@ -28,6 +28,7 @@ public class Main {
         post("/spaces", spaceController::createSpace);
         afterAfter((request, response) -> {
             response.type("application/json");
+            response.header("Server", "");
         });
 
         internalServerError(new JSONObject()
@@ -42,7 +43,7 @@ public class Main {
   private static void badRequest(Exception ex,
       Request request, Response response) {
     response.status(400);
-    response.body("{\"error\": \"" + ex + "\"}");
+    response.body(new JSONObject().put("error", ex.getMessage()).toString());
   }
 
     private static void createTables(Connection connection) throws Exception {
