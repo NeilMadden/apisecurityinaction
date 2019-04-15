@@ -7,9 +7,11 @@ import java.sql.Connection;
 
 import org.dalesbred.Database;
 import org.h2.jdbcx.JdbcConnectionPool;
-import org.json.JSONObject;
+import org.json.*;
 
 import com.manning.apisecurityinaction.controller.SpaceController;
+
+import spark.*;
 
 public class Main {
 
@@ -32,7 +34,16 @@ public class Main {
             .put("error", "internal server error").toString());
         notFound(new JSONObject()
             .put("error", "not found").toString());
+
+        exception(IllegalArgumentException.class, Main::badRequest);
+        exception(JSONException.class, Main::badRequest);
     }
+
+  private static void badRequest(Exception ex,
+      Request request, Response response) {
+    response.status(400);
+    response.body("{\"error\": \"" + ex + "\"}");
+  }
 
     private static void createTables(Connection connection) throws Exception {
         try (var conn = connection;
