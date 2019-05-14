@@ -56,6 +56,8 @@ public class Main {
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
+        var sessionController = new SessionController(database);
+        post("/sessions", sessionController::login);
         get("/logs", auditController::readAuditLog);
 
         post("/users", userController::registerUser);
