@@ -26,8 +26,11 @@ public class SessionController {
         if (hash.isPresent() &&
             SCryptUtil.check(password, hash.get())) {
 
-            // WARNING: the next line contains a security bug!
-            Session session = request.session(true);
+            var session = request.session(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            session = request.session(true);
             session.attribute("username", username);
 
             response.status(200);
