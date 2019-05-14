@@ -27,7 +27,7 @@ class CorsFilter implements Filter {
                 halt(403);
             }
             response.header("Access-Control-Allow-Headers",
-                    "Content-Type");
+                    "Content-Type, X-CSRF-Token");
             response.header("Access-Control-Allow-Methods",
                     "GET, POST, DELETE");
             halt(204);
