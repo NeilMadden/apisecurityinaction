@@ -73,7 +73,7 @@ public class Main {
         get("/spaces/:spaceId/messages", spaceController::findMessages);
 
         before("/spaces/:spaceId/members",
-                userController.requirePermission("POST", "r"));
+                userController.requirePermission("POST", "rwd"));
         post("/spaces/:spaceId/members", spaceController::addMember);
 
         var moderatorController =
