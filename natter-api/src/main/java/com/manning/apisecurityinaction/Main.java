@@ -10,6 +10,7 @@ import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 
 import spark.*;
@@ -25,6 +26,14 @@ public class Main {
 
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
+
+        var rateLimiter = RateLimiter.create(2.0d);
+
+        before((request, response) -> {
+            if (!rateLimiter.tryAcquire()) {
+                halt(429);
+            }
+        });
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
