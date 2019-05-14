@@ -58,13 +58,25 @@ public class Main {
 
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
+
+        before("/spaces/:spaceId/messages",
+                userController.requirePermission("POST", "w"));
         post("/spaces/:spaceId/messages", spaceController::postMessage);
+
+        before("/spaces/:spaceId/messages/*",
+                userController.requirePermission("GET", "r"));
         get("/spaces/:spaceId/messages/:msgId",
             spaceController::readMessage);
+
+        before("/spaces/:spaceId/messages",
+                userController.requirePermission("GET", "r"));
         get("/spaces/:spaceId/messages", spaceController::findMessages);
 
         var moderatorController =
             new ModeratorController(database);
+
+        before("/spaces/:spaceId/messages/*",
+                userController.requirePermission("DELETE", "d"));
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
 
