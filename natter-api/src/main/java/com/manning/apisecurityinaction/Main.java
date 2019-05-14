@@ -4,6 +4,7 @@ import static spark.Spark.*;
 
 import java.nio.file.*;
 import java.sql.Connection;
+import java.util.Set;
 
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
@@ -37,6 +38,8 @@ public class Main {
                 halt(429);
             }
         });
+
+        before(new CorsFilter(Set.of("http://localhost:9999")));
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
