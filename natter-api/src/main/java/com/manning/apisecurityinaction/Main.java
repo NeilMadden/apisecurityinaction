@@ -30,6 +30,7 @@ public class Main {
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
         var userController = new UserController(database);
+        var sessionController = new SessionController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
 
@@ -51,12 +52,12 @@ public class Main {
         }));
 
         before(userController::authenticate);
+        before(sessionController::validate);
 
         var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
-        var sessionController = new SessionController(database);
         post("/sessions", sessionController::login);
         get("/logs", auditController::readAuditLog);
 
