@@ -1,6 +1,11 @@
 const apiUrl = 'https://localhost:4567';
 
 function createSpace(name, owner) {
+    let csrfToken = localStorage.csrf;
+    if (!csrfToken) {
+        window.location.replace('/login.html');
+        return;
+    }
     let data = {name: name, owner: owner};
 
     fetch(apiUrl + '/spaces', {
@@ -8,7 +13,8 @@ function createSpace(name, owner) {
         credentials: 'include',
         body: JSON.stringify(data),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
         }
     })
     .then(response => {
