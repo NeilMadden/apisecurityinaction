@@ -26,6 +26,7 @@ public class Main {
 
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
+        var userController = new UserController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
 
@@ -43,6 +44,8 @@ public class Main {
                 ).toString());
             }
         }));
+
+        post("/users", userController::registerUser);
 
         post("/spaces", spaceController::createSpace);
         post("/spaces/:spaceId/messages", spaceController::postMessage);
