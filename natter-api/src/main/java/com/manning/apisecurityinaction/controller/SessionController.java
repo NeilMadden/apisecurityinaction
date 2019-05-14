@@ -1,13 +1,19 @@
 package com.manning.apisecurityinaction.controller;
 
+import java.util.Base64;
+
 import org.dalesbred.Database;
 import org.json.JSONObject;
 
 import com.lambdaworks.crypto.SCryptUtil;
+import com.manning.apisecurityinaction.CsrfFilter;
 
 import spark.*;
 
 public class SessionController {
+    private static final Base64.Encoder ENCODER =
+      Base64.getUrlEncoder().withoutPadding();
+
 
     private final Database database;
 
@@ -33,8 +39,11 @@ public class SessionController {
             session = request.session(true);
             session.attribute("username", username);
 
+            var csrfToken = ENCODER.encodeToString(
+                    CsrfFilter.hash(session.id()));
+
             response.status(200);
-            return new JSONObject();
+            return new JSONObject().put("token", csrfToken);
         }
         throw new IllegalArgumentException(
                 "invalid username or password");
