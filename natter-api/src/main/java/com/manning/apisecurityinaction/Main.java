@@ -51,17 +51,6 @@ public class Main {
             }
         }));
 
-        before((request, response) -> {
-            var requestedWith = request.headers("X-Requested-With");
-            if (requestedWith == null ||
-            requestedWith.toLowerCase().startsWith("shockwaveflash")) {
-                halt(403, new JSONObject().put(
-                        "error", "Request must contain X-Requested-With header"
-                ).toString());
-            }
-        });
-
-
         before(userController::authenticate);
         before(sessionController::validate);
 
