@@ -2,13 +2,6 @@ CREATE TABLE users(
     user_id VARCHAR(30) PRIMARY KEY,
     pw_hash VARCHAR(255) NOT NULL
 );
-CREATE TABLE permissions(
-    space_id INT NOT NULL REFERENCES spaces(space_id),
-    user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
-    perms VARCHAR(3) NOT NULL,
-    PRIMARY KEY (space_id, user_id)
-);
-
 CREATE TABLE spaces(
     space_id INT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -35,6 +28,14 @@ CREATE TABLE audit_log(
     audit_time TIMESTAMP NOT NULL
 );
 CREATE SEQUENCE audit_id_seq;
+
+CREATE TABLE permissions(
+    space_id INT NOT NULL REFERENCES spaces(space_id),
+    user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
+    perms VARCHAR(3) NOT NULL,
+    PRIMARY KEY (space_id, user_id)
+);
+
 
 CREATE USER natter_api_user PASSWORD 'password';
 GRANT SELECT, INSERT ON spaces, messages TO natter_api_user;
