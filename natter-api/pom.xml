@@ -43,5 +43,10 @@
       <artifactId>guava</artifactId>
       <version>27.0.1-jre</version>
     </dependency>
+    <dependency>
+      <groupId>com.lambdaworks</groupId>
+      <artifactId>scrypt</artifactId>
+      <version>1.4.0</version>
+    </dependency>
   </dependencies>
 </project>
