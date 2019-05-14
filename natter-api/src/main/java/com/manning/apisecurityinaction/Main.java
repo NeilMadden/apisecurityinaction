@@ -56,6 +56,7 @@ public class Main {
 
         post("/users", userController::registerUser);
 
+        before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
         post("/spaces/:spaceId/messages", spaceController::postMessage);
         get("/spaces/:spaceId/messages/:msgId",

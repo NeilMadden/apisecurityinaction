@@ -1,5 +1,7 @@
 package com.manning.apisecurityinaction.controller;
 
+import static spark.Spark.halt;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -71,6 +73,14 @@ public class UserController {
 
         if (hash.isPresent() && SCryptUtil.check(password, hash.get())) {
             request.attribute("subject", username);
+        }
+    }
+
+    public void requireAuthentication(Request request, Response response) {
+        if (request.attribute("subject") == null) {
+            response.header("WWW-Authenticate",
+                    "Basic realm=\"/\", charset=\"UTF-8\"");
+            halt(401);
         }
     }
 }
