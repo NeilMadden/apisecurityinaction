@@ -117,6 +117,26 @@ public class SpaceController {
         .collect(Collectors.toList()));
   }
 
+  public JSONObject addMember(Request request, Response response) {
+    var json = new JSONObject(request.body());
+    var spaceId = Long.parseLong(request.params(":spaceId"));
+    var userToAdd = json.getString("username");
+    var perms = json.getString("permissions");
+
+    if (!perms.matches("r?w?d?")) {
+      throw new IllegalArgumentException("invalid permissions");
+    }
+
+    database.updateUnique(
+            "INSERT INTO permissions(space_id, user_id, perms) " +
+                    "VALUES(?, ?, ?)", spaceId, userToAdd, perms);
+
+    response.status(200);
+    return new JSONObject()
+            .put("username", userToAdd)
+            .put("permissions", perms);
+  }
+
   public static class Message {
     private final long spaceId;
     private final long msgId;
