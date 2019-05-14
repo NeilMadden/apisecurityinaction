@@ -1,3 +1,8 @@
+CREATE TABLE users(
+    user_id VARCHAR(30) PRIMARY KEY,
+    pw_hash VARCHAR(255) NOT NULL
+);
+
 CREATE TABLE spaces(
     space_id INT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
