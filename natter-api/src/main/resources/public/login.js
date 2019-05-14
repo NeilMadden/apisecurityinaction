@@ -12,7 +12,12 @@ function login(username, password) {
         }
     })
     .then(res => {
-       if (res.ok) window.location.replace('/natter.html');
+       if (res.ok) {
+         res.json().then(json => {
+            localStorage.setItem("csrf", json.token);
+            window.location.replace('/natter.html');
+         });
+       }
     })
     .catch(error => console.error('Error logging in: ', error));
 }
