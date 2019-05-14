@@ -14,6 +14,8 @@ function createSpace(name, owner) {
     .then(response => {
         if (response.ok) {
             return response.json();
+        } else if (response.status === 401) {
+            window.location.replace('/login.html');
         } else {
             throw Error(response.statusText);
         }
