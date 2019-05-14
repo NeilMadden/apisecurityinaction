@@ -45,6 +45,8 @@ public class Main {
             }
         }));
 
+        before(userController::authenticate);
+
         post("/users", userController::registerUser);
 
         post("/spaces", spaceController::createSpace);
