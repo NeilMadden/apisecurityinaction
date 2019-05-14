@@ -48,6 +48,12 @@ public class Main {
 
         before(userController::authenticate);
 
+        var auditController = new AuditController(database);
+        before(auditController::auditRequestStart);
+        afterAfter(auditController::auditRequestEnd);
+
+        get("/logs", auditController::readAuditLog);
+
         post("/users", userController::registerUser);
 
         post("/spaces", spaceController::createSpace);
