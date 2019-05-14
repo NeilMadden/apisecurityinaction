@@ -39,4 +39,19 @@ public class SessionController {
         throw new IllegalArgumentException(
                 "invalid username or password");
     }
+
+    public void validate(Request request, Response response) {
+        var session = request.session(false);
+        if (session == null) {
+            return;
+        }
+
+        var username = session.attribute("username");
+        if (username == null) {
+            session.invalidate();
+            return;
+        }
+
+        request.attribute("subject", username);
+    }
 }
