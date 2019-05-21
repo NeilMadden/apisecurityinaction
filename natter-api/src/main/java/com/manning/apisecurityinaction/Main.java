@@ -4,7 +4,6 @@ import static spark.Spark.*;
 
 import java.nio.file.*;
 import java.sql.Connection;
-import java.util.Set;
 
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
@@ -13,12 +12,17 @@ import org.json.*;
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
+import com.manning.apisecurityinaction.token.*;
 
 import spark.*;
+import spark.embeddedserver.EmbeddedServers;
+import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
 public class Main {
 
     public static void main(String... args) throws Exception {
+        EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
+                new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
         secure("localhost.p12", "changeit", null, null);
         var datasource = JdbcConnectionPool.create(
@@ -30,7 +34,6 @@ public class Main {
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
         var userController = new UserController(database);
-        var sessionController = new SessionController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
 
@@ -39,8 +42,6 @@ public class Main {
                 halt(429);
             }
         });
-
-        before(new CorsFilter(Set.of("http://localhost:9999")));
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
@@ -51,14 +52,19 @@ public class Main {
             }
         }));
 
+        TokenStore tokenStore = new CookieTokenStore();
+        var tokenController = new TokenController(tokenStore);
+
         before(userController::authenticate);
-        before(sessionController::validate);
+        before(tokenController::validateToken);
 
         var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
-        post("/sessions", sessionController::login);
+        before("/sessions", userController::requireAuthentication);
+        post("/sessions", tokenController::login);
+
         get("/logs", auditController::readAuditLog);
 
         post("/users", userController::registerUser);

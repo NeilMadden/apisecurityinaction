@@ -1,20 +1,20 @@
 const apiUrl = 'https://localhost:4567';
 
 function login(username, password) {
-    let data = {username, password};
+    let credentials = 'Basic ' + btoa(username + ':' + password);
 
     fetch(apiUrl + '/sessions', {
         method: 'POST',
-        body: JSON.stringify(data),
-        credentials: "include",
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': credentials
         }
     })
     .then(res => {
        if (res.ok) {
          res.json().then(json => {
-            localStorage.setItem("csrf", json.token);
+            document.cookie = 'csrfToken=' + json.token +
+                ';Secure;SameSite=strict';
             window.location.replace('/natter.html');
          });
        }
