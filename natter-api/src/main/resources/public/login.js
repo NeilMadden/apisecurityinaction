@@ -14,7 +14,7 @@ function login(username, password) {
     .then(res => {
        if (res.ok) {
          res.json().then(json => {
-            document.cookie = 'csrfToken=' + json.token +
+            document.cookie = 'token=' + json.token +
                 ';Secure;SameSite=strict';
             window.location.replace('/natter.html');
          });
