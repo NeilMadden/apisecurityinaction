@@ -55,7 +55,7 @@ public class Main {
             }
         }));
 
-        TokenStore tokenStore = new CookieTokenStore();
+        TokenStore tokenStore = new DatabaseTokenStore(database);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
