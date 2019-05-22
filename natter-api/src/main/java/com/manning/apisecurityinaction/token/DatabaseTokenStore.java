@@ -2,19 +2,28 @@ package com.manning.apisecurityinaction.token;
 
 import org.dalesbred.Database;
 import org.json.JSONObject;
+import org.slf4j.*;
 import spark.Request;
 
 import java.security.SecureRandom;
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class DatabaseTokenStore implements TokenStore {
+    private static final Logger logger =
+            LoggerFactory.getLogger(DatabaseTokenStore.class);
+
     private final Database database;
     private final SecureRandom secureRandom;
 
     public DatabaseTokenStore(Database database) {
         this.database = database;
         this.secureRandom = new SecureRandom();
+
+        Executors.newSingleThreadScheduledExecutor()
+                .scheduleWithFixedDelay(this::deleteExpiredTokens,
+                        10, 10, TimeUnit.MINUTES);
     }
 
     private String randomId() {
@@ -60,5 +69,11 @@ public class DatabaseTokenStore implements TokenStore {
             token.attributes.put(key, json.getString(key));
         }
         return token;
+    }
+
+    private void deleteExpiredTokens() {
+        var deleted = database.update(
+            "DELETE FROM tokens WHERE expiry < current_timestamp");
+        logger.info("Deleted {} expired tokens", deleted);
     }
 }
