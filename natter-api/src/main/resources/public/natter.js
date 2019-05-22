@@ -2,15 +2,14 @@ const apiUrl = 'https://localhost:4567';
 
 function createSpace(name, owner) {
     let data = {name: name, owner: owner};
-    let csrfToken = getCookie('csrfToken');
+    let token = getCookie('token');
 
     fetch(apiUrl + '/spaces', {
         method: 'POST',
-        credentials: 'include',
         body: JSON.stringify(data),
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
+            'Authorization': 'Bearer ' + token
         }
     })
     .then(response => {
