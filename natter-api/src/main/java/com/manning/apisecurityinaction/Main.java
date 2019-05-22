@@ -1,22 +1,21 @@
 package com.manning.apisecurityinaction;
 
-import static spark.Spark.*;
-
-import java.nio.file.*;
-import java.sql.Connection;
-
+import com.google.common.util.concurrent.RateLimiter;
+import com.manning.apisecurityinaction.controller.*;
+import com.manning.apisecurityinaction.token.*;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
-
-import com.google.common.util.concurrent.RateLimiter;
-import com.manning.apisecurityinaction.controller.*;
-import com.manning.apisecurityinaction.token.*;
-
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
+
+import java.nio.file.*;
+import java.sql.Connection;
+
+import static spark.Service.SPARK_DEFAULT_PORT;
+import static spark.Spark.*;
 
 public class Main {
 
@@ -25,6 +24,9 @@ public class Main {
                 new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
         secure("localhost.p12", "changeit", null, null);
+        port(args.length > 0 ? Integer.parseInt(args[0])
+                             : SPARK_DEFAULT_PORT);
+
         var datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter", "password");
         createTables(datasource.getConnection());
