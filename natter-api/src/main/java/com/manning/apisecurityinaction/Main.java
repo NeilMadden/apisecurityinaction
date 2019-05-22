@@ -13,6 +13,7 @@ import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
 import java.nio.file.*;
 import java.sql.Connection;
+import java.util.Set;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -38,12 +39,12 @@ public class Main {
         var userController = new UserController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
-
         before((request, response) -> {
             if (!rateLimiter.tryAcquire()) {
                 halt(429);
             }
         });
+        before(new CorsFilter(Set.of("https://localhost:9999")));
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
