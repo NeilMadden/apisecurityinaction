@@ -7,6 +7,8 @@ import spark.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import static spark.Spark.halt;
+
 public class TokenController {
 
     private final TokenStore tokenStore;
@@ -42,6 +44,7 @@ public class TokenController {
                 response.header("WWW-Authenticate",
                         "Bearer error=\"invalid_token\"," +
                                 "error_description=\"Expired\"");
+                halt(401);
             }
         });
     }
