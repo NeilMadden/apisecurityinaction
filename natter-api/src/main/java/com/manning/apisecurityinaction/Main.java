@@ -64,7 +64,8 @@ public class Main {
                 keyPassword);
         var macKey = keyStore.getKey("hmac-key", keyPassword);
 
-        TokenStore tokenStore = new DatabaseTokenStore(database);
+//        TokenStore tokenStore = new DatabaseTokenStore(database);
+        TokenStore tokenStore = new JsonTokenStore();
         tokenStore = new HmacTokenStore(tokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
