@@ -1,6 +1,7 @@
 package com.manning.apisecurityinaction.token;
 
 import org.dalesbred.Database;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONObject;
 import org.slf4j.*;
 import spark.Request;
@@ -25,8 +26,13 @@ public class DatabaseTokenStore implements TokenStore {
         this.macKey = macKey;
         this.secureRandom = new SecureRandom();
 
+        var datasource = JdbcConnectionPool.create(
+                "jdbc:h2:mem:natter", "token_mgmt_user", "password");
+        var mgmtDatabase = Database.forDataSource(datasource);
+
         Executors.newSingleThreadScheduledExecutor()
-                .scheduleWithFixedDelay(this::deleteExpiredTokens,
+                .scheduleWithFixedDelay(() ->
+                                deleteExpiredTokens(mgmtDatabase),
                         10, 10, TimeUnit.MINUTES);
     }
 
@@ -77,7 +83,7 @@ public class DatabaseTokenStore implements TokenStore {
         return token;
     }
 
-    private void deleteExpiredTokens() {
+    private void deleteExpiredTokens(Database database) {
         var deleted = database.update(
             "DELETE FROM tokens WHERE expiry < current_timestamp");
         logger.info("Deleted {} expired tokens", deleted);

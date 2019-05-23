@@ -51,4 +51,7 @@ GRANT DELETE ON messages TO natter_api_user;
 GRANT SELECT, INSERT ON users TO natter_api_user;
 GRANT SELECT, INSERT ON audit_log TO natter_api_user;
 GRANT SELECT, INSERT ON permissions TO natter_api_user;
-GRANT SELECT, INSERT, DELETE ON tokens TO natter_api_user;
+GRANT SELECT, INSERT ON tokens TO natter_api_user;
+
+CREATE USER token_mgmt_user PASSWORD 'password';
+GRANT SELECT, DELETE ON tokens TO token_mgmt_user;
