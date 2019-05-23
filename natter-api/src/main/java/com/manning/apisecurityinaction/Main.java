@@ -11,7 +11,9 @@ import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
+import java.io.FileInputStream;
 import java.nio.file.*;
+import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
 
@@ -55,7 +57,15 @@ public class Main {
             }
         }));
 
+        var keyPassword = System.getProperty("keystore.password",
+                "changeit").toCharArray();
+        var keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream("keystore.p12"),
+                keyPassword);
+        var macKey = keyStore.getKey("hmac-key", keyPassword);
+
         TokenStore tokenStore = new DatabaseTokenStore(database);
+        tokenStore = new HmacTokenStore(tokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
