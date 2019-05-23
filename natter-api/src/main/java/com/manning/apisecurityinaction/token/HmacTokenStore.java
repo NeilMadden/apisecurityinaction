@@ -29,7 +29,7 @@ public class HmacTokenStore implements TokenStore {
 
     private byte[] hmac(String tokenId) {
         try {
-            var mac = Mac.getInstance("HmacSHA256");
+            var mac = Mac.getInstance(macKey.getAlgorithm());
             mac.init(macKey);
             return mac.doFinal(
                     tokenId.getBytes(StandardCharsets.UTF_8));
