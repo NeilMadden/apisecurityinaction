@@ -49,8 +49,8 @@ public class EncryptedTokenStore implements TokenStore {
 
     static byte[][] encrypt(Key key, byte[] message) {
         try {
-            var cipher = Cipher.getInstance("AES/CTR/NoPadding");
-            var nonce = new byte[16];
+            var cipher = Cipher.getInstance("ChaCha20-Poly1305");
+            var nonce = new byte[12];
             new SecureRandom().nextBytes(nonce);
             cipher.init(ENCRYPT_MODE, key, new IvParameterSpec(nonce));
             var encrypted = cipher.doFinal(message);
@@ -62,7 +62,7 @@ public class EncryptedTokenStore implements TokenStore {
 
     static byte[] decrypt(Key key, byte[] nonce, byte[] ciphertext) {
         try {
-            var cipher = Cipher.getInstance("AES/CTR/NoPadding");
+            var cipher = Cipher.getInstance("ChaCha20-Poly1305");
             cipher.init(DECRYPT_MODE, key, new IvParameterSpec(nonce));
             return cipher.doFinal(ciphertext);
         } catch (GeneralSecurityException e) {
