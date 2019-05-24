@@ -9,6 +9,7 @@ import java.util.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class JsonTokenStore implements TokenStore {
+
     @Override
     public String create(Request request, Token token) {
         var json = new JSONObject();
@@ -16,9 +17,9 @@ public class JsonTokenStore implements TokenStore {
         json.put("exp", token.expiry.getEpochSecond());
         json.put("attrs", token.attributes);
 
-        var jsonString = json.toString();
+        var jsonBytes = json.toString().getBytes(UTF_8);
         return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(jsonString.getBytes(UTF_8));
+                .encodeToString(jsonBytes);
     }
 
     @Override
@@ -45,4 +46,5 @@ public class JsonTokenStore implements TokenStore {
     public void revoke(Request request, String tokenId) {
         // TODO
     }
+
 }
