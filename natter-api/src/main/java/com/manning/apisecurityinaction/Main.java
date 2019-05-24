@@ -67,7 +67,7 @@ public class Main {
 
 //        TokenStore tokenStore = new DatabaseTokenStore(database, macKey);
         TokenStore tokenStore = new JsonTokenStore(encKey);
-        tokenStore = new HmacTokenStore(tokenStore, macKey);
+//        tokenStore = new HmacTokenStore(tokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
