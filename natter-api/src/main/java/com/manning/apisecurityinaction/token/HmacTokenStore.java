@@ -1,11 +1,13 @@
 package com.manning.apisecurityinaction.token;
 
+import org.json.JSONObject;
 import spark.Request;
 
 import javax.crypto.Mac;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.*;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class HmacTokenStore implements TokenStore {
 
@@ -20,6 +22,12 @@ public class HmacTokenStore implements TokenStore {
     @Override
     public String create(Request request, Token token) {
         var tokenId = delegate.create(request, token);
+        var header = new JSONObject()
+                .put("alg", jwsAlgorithm(macKey))
+                .put("typ", "JWT").toString();
+        header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(header.getBytes(UTF_8));
+        tokenId = header + '.' + tokenId;
         var tag = hmac(tokenId);
 
         return tokenId + '.' +
@@ -32,7 +40,7 @@ public class HmacTokenStore implements TokenStore {
             var mac = Mac.getInstance(macKey.getAlgorithm());
             mac.init(macKey);
             return mac.doFinal(
-                    tokenId.getBytes(StandardCharsets.UTF_8));
+                    tokenId.getBytes(UTF_8));
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
@@ -40,21 +48,47 @@ public class HmacTokenStore implements TokenStore {
 
     @Override
     public Optional<Token> read(Request request, String tokenId) {
-        var index = tokenId.lastIndexOf('.');
-        if (index == -1) {
+        var headerIndex = tokenId.indexOf('.');
+        var tagIndex = tokenId.lastIndexOf('.');
+
+        var decoder = Base64.getUrlDecoder();
+        var decodedHeader = decoder.decode(
+                tokenId.substring(0, headerIndex));
+        var header = new JSONObject(new String(decodedHeader, UTF_8));
+
+        if (!"JWT".equals(header.getString("typ"))) {
             return Optional.empty();
         }
-        var realTokenId = tokenId.substring(0, index);
+        if (!jwsAlgorithm(macKey).equals(header.getString("alg"))) {
+            return Optional.empty();
+        }
 
-        var provided = Base64.getUrlDecoder()
-                .decode(tokenId.substring(index + 1));
-        var computed = hmac(realTokenId);
+        var realTokenId = tokenId.substring(headerIndex + 1, tagIndex);
+        var provided = decoder.decode(tokenId.substring(tagIndex + 1));
+        var computed = hmac(tokenId.substring(0, tagIndex));
 
         if (!MessageDigest.isEqual(provided, computed)) {
             return Optional.empty();
         }
 
         return delegate.read(request, realTokenId);
+    }
+
+    private static String jwsAlgorithm(Key key) {
+        switch (key.getAlgorithm()) {
+            case "HmacSHA256":
+            case "1.2.840.113549.2.9":
+                return "HS256";
+            case "HmacSHA384":
+            case "1.2.840.113549.2.10":
+                return "HS384";
+            case "HmacSHA512":
+            case "1.2.840.113549.2.11":
+                return "HS512";
+            default:
+                throw new IllegalStateException(
+                        "unknown algorithm: " + key.getAlgorithm());
+        }
     }
 
     @Override
