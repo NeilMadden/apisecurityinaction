@@ -6,9 +6,8 @@ import com.nimbusds.jwt.*;
 import spark.Request;
 
 import javax.crypto.SecretKey;
-import java.sql.Date;
 import java.text.ParseException;
-import java.util.Optional;
+import java.util.*;
 
 public class JwtTokenStore implements TokenStore {
 
