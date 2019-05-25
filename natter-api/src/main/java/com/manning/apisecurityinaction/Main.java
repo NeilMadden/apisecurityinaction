@@ -70,9 +70,7 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-        TokenStore tokenStore = new JsonTokenStore();
-        tokenStore = new JwtHeaderTokenStore(tokenStore, header);
-        tokenStore = new HmacTokenStore(tokenStore, macKey);
+        TokenStore tokenStore = new JwtTokenStore((SecretKey) encKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
