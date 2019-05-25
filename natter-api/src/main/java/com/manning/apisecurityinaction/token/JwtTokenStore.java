@@ -21,6 +21,7 @@ public class JwtTokenStore implements TokenStore {
     public String create(Request request, Token token) {
         var claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(token.username)
+                .audience("https://localhost:4567")
                 .expirationTime(Date.from(token.expiry));
         token.attributes.forEach(claimsBuilder::claim);
 
@@ -41,16 +42,20 @@ public class JwtTokenStore implements TokenStore {
     public Optional<Token> read(Request request, String tokenId) {
         try {
             var jwt = EncryptedJWT.parse(tokenId);
-            var decryptor = new DirectDecrypter(encKey);
 
+            var decryptor = new DirectDecrypter(encKey);
             jwt.decrypt(decryptor);
 
             var claims = jwt.getJWTClaimsSet();
+            if (!claims.getAudience().contains("https://localhost:4567")) {
+                return Optional.empty();
+            }
             var expiry = claims.getExpirationTime().toInstant();
             var subject = claims.getSubject();
             var token = new Token(expiry, subject);
+            var ignore = Set.of("exp", "sub", "aud");
             for (var attr : claims.getClaims().keySet()) {
-                if ("exp".equals(attr) || "sub".equals(attr)) continue;
+                if (ignore.contains(attr)) continue;
                 token.attributes.put(attr, claims.getStringClaim(attr));
             }
 

@@ -66,8 +66,7 @@ public class Main {
         var macKey = keyStore.getKey("hmac-key", keyPassword);
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
-        TokenStore tokenStore = new JsonTokenStore();
-        tokenStore = new HmacTokenStore(tokenStore, macKey);
+        TokenStore tokenStore = new JwtTokenStore((SecretKey) encKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
