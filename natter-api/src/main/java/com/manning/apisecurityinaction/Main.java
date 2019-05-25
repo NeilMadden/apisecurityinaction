@@ -11,6 +11,7 @@ import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
+import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.nio.file.*;
 import java.security.KeyStore;
@@ -66,7 +67,7 @@ public class Main {
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
         TokenStore tokenStore = new JsonTokenStore();
-        tokenStore = new EncryptedTokenStore(tokenStore, encKey);
+        tokenStore = new HmacTokenStore(tokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);

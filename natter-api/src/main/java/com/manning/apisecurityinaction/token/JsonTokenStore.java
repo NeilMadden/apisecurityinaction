@@ -33,7 +33,7 @@ public class JsonTokenStore implements TokenStore {
             var audience = json.getJSONArray("aud").toList();
             var attrs = json.getJSONObject("attrs");
 
-            if (!audience.contains("https://locahost:4567")) {
+            if (!audience.contains("https://localhost:4567")) {
                 return Optional.empty();
             }
 
