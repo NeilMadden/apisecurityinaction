@@ -48,30 +48,31 @@ public class HmacTokenStore implements TokenStore {
 
     @Override
     public Optional<Token> read(Request request, String tokenId) {
-        var headerIndex = tokenId.indexOf('.');
-        var tagIndex = tokenId.lastIndexOf('.');
+        var parts = tokenId.split("\\.");
+        if (parts.length != 3) return Optional.empty();
+
+        var header = parts[0];
+        var payload = parts[1];
+        var tag = parts[2];
 
         var decoder = Base64.getUrlDecoder();
-        var decodedHeader = decoder.decode(
-                tokenId.substring(0, headerIndex));
-        var header = new JSONObject(new String(decodedHeader, UTF_8));
-
-        if (!"JWT".equals(header.getString("typ"))) {
-            return Optional.empty();
-        }
-        if (!jwsAlgorithm(macKey).equals(header.getString("alg"))) {
-            return Optional.empty();
-        }
-
-        var realTokenId = tokenId.substring(headerIndex + 1, tagIndex);
-        var provided = decoder.decode(tokenId.substring(tagIndex + 1));
-        var computed = hmac(tokenId.substring(0, tagIndex));
+        var provided = decoder.decode(tag);
+        var computed = hmac(header + '.' + payload);
 
         if (!MessageDigest.isEqual(provided, computed)) {
             return Optional.empty();
         }
 
-        return delegate.read(request, realTokenId);
+        var jwtHeader = new JSONObject(
+                new String(decoder.decode(header), UTF_8));
+        if (!"JWT".equals(jwtHeader.getString("typ"))) {
+            return Optional.empty();
+        }
+        if (!jwsAlgorithm(macKey).equals(jwtHeader.getString("alg"))) {
+            return Optional.empty();
+        }
+
+        return delegate.read(request, payload);
     }
 
     private static String jwsAlgorithm(Key key) {
