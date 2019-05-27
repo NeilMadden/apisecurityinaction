@@ -9,7 +9,7 @@ import java.util.*;
 
 import static javax.crypto.Cipher.*;
 
-public class EncryptedTokenStore implements TokenStore {
+public class EncryptedTokenStore implements SecureTokenStore {
 
     private final TokenStore delegate;
     private final Key encryptionKey;

@@ -9,7 +9,7 @@ import javax.crypto.SecretKey;
 import java.text.ParseException;
 import java.util.*;
 
-public class JwtTokenStore implements TokenStore {
+public class JwtTokenStore implements SecureTokenStore {
 
     private final SecretKey encKey;
 

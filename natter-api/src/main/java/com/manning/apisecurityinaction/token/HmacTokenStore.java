@@ -8,7 +8,7 @@ import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class HmacTokenStore implements TokenStore {
+public class HmacTokenStore implements SecureTokenStore {
 
     private final TokenStore delegate;
     private final Key macKey;

@@ -70,7 +70,9 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-        TokenStore tokenStore = new JwtTokenStore((SecretKey) encKey);
+        SecureTokenStore tokenStore =
+                new EncryptedTokenStore(new JsonTokenStore(), encKey);
+
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
