@@ -35,6 +35,16 @@ public class OAuth2Controller {
         var scope = Set.of(
                 request.queryParamOrDefault("scope", "").split(" "));
 
+        for (var s : scope) {
+            if (!s.matches("^[\\x21\\x23-\\x5B\\x5D-\\x7E]*$")) {
+                response.status(400);
+                return new JSONObject()
+                        .put("error", "invalid_request")
+                        .put("error_description",
+                                "illegal character in scope");
+            }
+        }
+
         var access = grantType.validate(request, scope);
         if (!access.granted) {
             response.status(400);
