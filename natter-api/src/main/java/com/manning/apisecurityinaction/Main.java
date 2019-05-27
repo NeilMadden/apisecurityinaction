@@ -2,6 +2,7 @@ package com.manning.apisecurityinaction;
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
+import com.manning.apisecurityinaction.oauth2.*;
 import com.manning.apisecurityinaction.token.*;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
@@ -16,7 +17,7 @@ import java.io.FileInputStream;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
-import java.util.Set;
+import java.util.*;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -49,15 +50,6 @@ public class Main {
         });
         before(new CorsFilter(Set.of("https://localhost:9999")));
 
-        before(((request, response) -> {
-            if (request.requestMethod().equals("POST") &&
-            !"application/json".equals(request.contentType())) {
-                halt(406, new JSONObject().put(
-                    "error", "Only application/json supported"
-                ).toString());
-            }
-        }));
-
         var keyPassword = System.getProperty("keystore.password",
                 "changeit").toCharArray();
         var keyStore = KeyStore.getInstance("PKCS12");
@@ -84,6 +76,13 @@ public class Main {
 
         before("/sessions", userController::requireAuthentication);
         post("/sessions", tokenController::login);
+
+        var grantTypes = Map.<String, GrantType>of(
+                "password", new ResourceOwnerPassword(database));
+        var oauth2Controller = new OAuth2Controller(
+                tokenStore, grantTypes);
+
+        post("/token", oauth2Controller::issueTokens);
 
         get("/logs", auditController::readAuditLog);
 
