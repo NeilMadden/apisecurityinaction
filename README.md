@@ -14,3 +14,25 @@ The branches named "chapter02-end", "chapter03-end" etc give the
 final source code after all the alterations in that chapter. Typically
 the source code at the end of a chapter is also identical to the start
 of the next chapter.
+
+## Chapters
+
+### Chapter 2 - Secure API development
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter02)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter02-end)
+
+### Chapter 3 - Securing the Natter API
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter03)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter03-end)
+
+### Chapter 4 - Session cookie authentication
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter04)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter04-end)
+
+### Chapter 5 - Modern token-based authentication
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter05)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter05-end)
