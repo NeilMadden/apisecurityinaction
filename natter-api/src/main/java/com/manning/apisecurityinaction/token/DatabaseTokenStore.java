@@ -1,14 +1,11 @@
 package com.manning.apisecurityinaction.token;
 
 import org.dalesbred.Database;
-import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.JSONObject;
 import org.slf4j.*;
 import spark.Request;
 
-import javax.crypto.Mac;
-import java.io.*;
-import java.security.*;
+import java.security.SecureRandom;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -19,20 +16,13 @@ public class DatabaseTokenStore implements SecureTokenStore {
 
     private final Database database;
     private final SecureRandom secureRandom;
-    private final Key macKey;
 
-    public DatabaseTokenStore(Database database, Key macKey) {
+    public DatabaseTokenStore(Database database) {
         this.database = database;
-        this.macKey = macKey;
         this.secureRandom = new SecureRandom();
 
-        var datasource = JdbcConnectionPool.create(
-                "jdbc:h2:mem:natter", "token_mgmt_user", "password");
-        var mgmtDatabase = Database.forDataSource(datasource);
-
         Executors.newSingleThreadScheduledExecutor()
-                .scheduleWithFixedDelay(() ->
-                                deleteExpiredTokens(mgmtDatabase),
+                .scheduleWithFixedDelay(this::deleteExpiredTokens,
                         10, 10, TimeUnit.MINUTES);
     }
 
@@ -47,66 +37,38 @@ public class DatabaseTokenStore implements SecureTokenStore {
     public String create(Request request, Token token) {
         var tokenId = randomId();
         var attrs = new JSONObject(token.attributes).toString();
-        var tag = hmac(tokenId, token);
 
         database.updateUnique("INSERT INTO " +
-            "tokens(token_id, user_id, expiry, attributes, mac_tag) " +
-            "VALUES(?, ?, ?, ?, ?)", tokenId, token.username,
-                token.expiry, attrs, tag);
+            "tokens(token_id, user_id, expiry, attributes) " +
+            "VALUES(?, ?, ?, ?)", tokenId, token.username,
+                token.expiry, attrs);
 
         return tokenId;
     }
 
     @Override
     public Optional<Token> read(Request request, String tokenId) {
-        return database.findOptional(row -> readToken(tokenId, row),
-                "SELECT user_id, expiry, attributes, mac_tag " +
+        return database.findOptional(this::readToken,
+                "SELECT user_id, expiry, attributes " +
                 "FROM tokens WHERE token_id = ?", tokenId);
     }
 
-    private Token readToken(String tokenId, ResultSet resultSet)
+    private Token readToken(ResultSet resultSet)
             throws SQLException {
         var username = resultSet.getString(1);
         var expiry = resultSet.getTimestamp(2).toInstant();
         var json = new JSONObject(resultSet.getString(3));
-        var tag = resultSet.getBytes(4);
 
         var token = new Token(expiry, username);
         for (var key : json.keySet()) {
             token.attributes.put(key, json.getString(key));
         }
-
-        var computedTag = hmac(tokenId, token);
-        if (!MessageDigest.isEqual(computedTag, tag)) {
-            return null;
-        }
         return token;
     }
 
-    private void deleteExpiredTokens(Database database) {
+    private void deleteExpiredTokens() {
         var deleted = database.update(
             "DELETE FROM tokens WHERE expiry < current_timestamp");
         logger.info("Deleted {} expired tokens", deleted);
-    }
-
-    private byte[] hmac(String tokenId, Token token) {
-        try (var bytes = new ByteArrayOutputStream();
-             var out = new DataOutputStream(bytes)) {
-
-            out.writeUTF(tokenId);
-            out.writeUTF(token.username);
-            out.writeLong(token.expiry.toEpochMilli());
-
-            var sortedAttrs = new TreeMap<>(token.attributes);
-            out.writeUTF(sortedAttrs.toString());
-            out.flush();
-
-            var mac = Mac.getInstance(macKey.getAlgorithm());
-            mac.init(macKey);
-            return mac.doFinal(bytes.toByteArray());
-
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

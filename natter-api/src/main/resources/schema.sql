@@ -40,8 +40,7 @@ CREATE TABLE tokens(
     token_id VARCHAR(30) PRIMARY KEY,
     user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
     expiry TIMESTAMP NOT NULL,
-    attributes VARCHAR(4096) NOT NULL,
-    mac_tag BINARY(32) NOT NULL
+    attributes VARCHAR(4096) NOT NULL
 );
 CREATE INDEX expired_token_idx ON tokens(expiry);
 
