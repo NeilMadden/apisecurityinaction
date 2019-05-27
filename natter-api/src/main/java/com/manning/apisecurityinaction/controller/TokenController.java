@@ -1,6 +1,6 @@
 package com.manning.apisecurityinaction.controller;
 
-import com.manning.apisecurityinaction.token.TokenStore;
+import com.manning.apisecurityinaction.token.*;
 import org.json.JSONObject;
 import spark.*;
 
@@ -11,9 +11,9 @@ import static spark.Spark.halt;
 
 public class TokenController {
 
-    private final TokenStore tokenStore;
+    private final SecureTokenStore tokenStore;
 
-    public TokenController(TokenStore tokenStore) {
+    public TokenController(SecureTokenStore tokenStore) {
         this.tokenStore = tokenStore;
     }
 

@@ -10,7 +10,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class DatabaseTokenStore implements TokenStore {
+public class DatabaseTokenStore implements SecureTokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 
