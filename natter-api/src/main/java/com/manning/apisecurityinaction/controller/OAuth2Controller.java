@@ -1,12 +1,14 @@
 package com.manning.apisecurityinaction.controller;
 
-import com.manning.apisecurityinaction.oauth2.*;
+import com.manning.apisecurityinaction.oauth2.GrantType;
 import com.manning.apisecurityinaction.token.*;
 import org.json.JSONObject;
 import spark.*;
 
 import java.time.*;
 import java.util.*;
+
+import static spark.Spark.halt;
 
 public class OAuth2Controller {
 
@@ -63,5 +65,24 @@ public class OAuth2Controller {
                 .put("token_type", "Bearer")
                 .put("expires_in", validityDuration.toSeconds())
                 .put("scope", accessToken.attributes.get("scope"));
+    }
+
+    public Filter requireScope(String method, String scope) {
+        return (request, response) -> {
+            if (!request.requestMethod().equals(method)) {
+                return;
+            }
+
+            var requestScope = request.<String>attribute("scope");
+            if (requestScope != null) {
+                var scopeSet = Set.of(requestScope.split(" "));
+                if (!scopeSet.contains(scope)) {
+                    response.header("WWW-Authenticate",
+                            "Bearer error=\"insufficient_scope\"," +
+                                    "scope=\"" + scope + "\"");
+                    halt(401);
+                }
+            }
+        };
     }
 }
