@@ -15,7 +15,8 @@ public class ResourceOwnerPassword implements GrantType {
     }
 
     @Override
-    public AccessDecision validate(Request request, Set<String> scope) {
+    public AccessDecision validate(Request request, Client client,
+                                   Set<String> scope) {
         if (!"application/x-www-form-urlencoded".equals(
                 request.contentType())) {
             throw new IllegalArgumentException(

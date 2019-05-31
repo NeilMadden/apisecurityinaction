@@ -1,6 +1,6 @@
 package com.manning.apisecurityinaction.controller;
 
-import com.manning.apisecurityinaction.oauth2.GrantType;
+import com.manning.apisecurityinaction.oauth2.*;
 import com.manning.apisecurityinaction.token.*;
 import org.json.JSONObject;
 import spark.*;
@@ -14,13 +14,16 @@ public class OAuth2Controller {
 
     private final SecureTokenStore accessTokenStore;
     private final Map<String, GrantType> grantTypes;
+    private final Map<String, Client> clients;
 
     private final Duration validityDuration;
 
     public OAuth2Controller(SecureTokenStore accessTokenStore,
-                            Map<String, GrantType> grantTypes) {
+                            Map<String, GrantType> grantTypes,
+                            Map<String, Client> clients) {
         this.accessTokenStore = accessTokenStore;
         this.grantTypes = grantTypes;
+        this.clients = clients;
 
         this.validityDuration = Duration.ofMinutes(10);
     }
@@ -41,13 +44,22 @@ public class OAuth2Controller {
             if (!s.matches("^[\\x21\\x23-\\x5B\\x5D-\\x7E]*$")) {
                 response.status(400);
                 return new JSONObject()
-                        .put("error", "invalid_request")
+                        .put("error", "invalid_scope")
                         .put("error_description",
                                 "illegal character in scope");
             }
         }
 
-        var access = grantType.validate(request, scope);
+        var client = clients.get(request.queryParams("client_id"));
+        if (client != null) {
+            if (!client.allowedScope.containsAll(scope)) {
+                response.status(403);
+                return new JSONObject()
+                        .put("error", "access_denied");
+            }
+        }
+
+        var access = grantType.validate(request, client, scope);
         if (!access.granted) {
             response.status(400);
             return new JSONObject()
