@@ -6,6 +6,7 @@ import spark.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 
 import static spark.Spark.halt;
 
@@ -22,6 +23,12 @@ public class TokenController {
         var expiry = Instant.now().plus(10, ChronoUnit.MINUTES);
 
         var token = new TokenStore.Token(expiry, subject);
+
+        var scope = request.queryParams("scope");
+        if (scope != null) {
+            token.attributes.put("scope", scope);
+        }
+
         var tokenId = tokenStore.create(request, token);
 
         response.status(201);
@@ -47,6 +54,22 @@ public class TokenController {
                 halt(401);
             }
         });
+    }
+
+    public Filter requireScope(String method, String requiredScope) {
+        return (request, response) -> {
+            if (!method.equals(request.requestMethod())) return;
+
+            var tokenScope = request.<String>attribute("scope");
+            if (tokenScope == null) return;
+            if (!Arrays.asList(tokenScope.split(" "))
+                    .contains(requiredScope)) {
+                response.header("WWW-Authenticate",
+                        "Bearer error=\"insufficient_scope\"," +
+                                "scope=\"" + requiredScope + "\"");
+                halt(403);
+            }
+        };
     }
 
     public JSONObject logout(Request request, Response response) {
