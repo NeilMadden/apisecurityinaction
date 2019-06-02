@@ -47,6 +47,18 @@ public class EncryptedTokenStore implements TokenStore {
         return delegate.read(request, encoder.encodeToString(decrypted));
     }
 
+    @Override
+    public void revoke(Request request, String tokenId) {
+        var index = tokenId.indexOf('.');
+        if (index == -1) { return; }
+
+        var nonce = decoder.decode(tokenId.substring(0, index));
+        var encrypted = decoder.decode(tokenId.substring(index + 1));
+        var decrypted = decrypt(encryptionKey, nonce, encrypted);
+
+        delegate.revoke(request, encoder.encodeToString(decrypted));
+    }
+
     static byte[][] encrypt(Key key, byte[] message) {
         try {
             var cipher = Cipher.getInstance("AES/CTR/NoPadding");
