@@ -40,4 +40,9 @@ public class JsonTokenStore implements TokenStore {
             return Optional.empty();
         }
     }
+
+    @Override
+    public void revoke(Request request, String tokenId) {
+        // TODO
+    }
 }
