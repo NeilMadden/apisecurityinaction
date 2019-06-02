@@ -17,13 +17,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class OAuth2TokenStore implements SecureTokenStore {
 
     private final URI introspectionEndpoint;
+    private final URI revocationEndpoint;
     private final String authorization;
 
     private final HttpClient httpClient;
 
     public OAuth2TokenStore(URI introspectionEndpoint,
+                            URI revocationEndpoint,
                             String clientId, String clientSecret) {
         this.introspectionEndpoint = introspectionEndpoint;
+        this.revocationEndpoint = revocationEndpoint;
 
         var credentials = URLEncoder.encode(clientId, UTF_8) + ":" +
                 URLEncoder.encode(clientSecret, UTF_8);
@@ -68,6 +71,26 @@ public class OAuth2TokenStore implements SecureTokenStore {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public void revoke(Request request, String tokenId) {
+        var form = "token=" + URLEncoder.encode(tokenId, UTF_8);
+
+        var httpRequest = HttpRequest.newBuilder()
+                .uri(revocationEndpoint)
+                .header("Authorization", authorization)
+                .POST(BodyPublishers.ofString(form))
+                .build();
+
+        try {
+            httpClient.send(httpRequest, BodyHandlers.discarding());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 
     private Optional<Token> processResponse(JSONObject response) {
