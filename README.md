@@ -36,3 +36,13 @@ of the next chapter.
 
  - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter05)
  - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter05-end)
+
+### Chapter 6 - Self-contained tokens and JWTs
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter06)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter06-end)
+
+### Chapter 7 - OAuth 2 and OpenID Connect
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter07)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter07-end)
