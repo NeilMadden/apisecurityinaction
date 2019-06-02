@@ -47,4 +47,13 @@ public class JwtHeaderTokenStore implements TokenStore {
 
         return delegate.read(request, realTokenId);
     }
+
+    @Override
+    public void revoke(Request request, String tokenId) {
+        var index = tokenId.indexOf('.');
+        if (index == -1) return;
+
+        var realTokenId = tokenId.substring(index + 1);
+        delegate.revoke(request, realTokenId);
+    }
 }
