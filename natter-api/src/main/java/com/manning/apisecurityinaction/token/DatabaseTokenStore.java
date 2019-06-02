@@ -22,7 +22,7 @@ public class DatabaseTokenStore implements TokenStore {
         this.secureRandom = new SecureRandom();
 
         Executors.newSingleThreadScheduledExecutor()
-                .scheduleWithFixedDelay(this::deleteExpiredTokens,
+                .scheduleAtFixedRate(this::deleteExpiredTokens,
                         10, 10, TimeUnit.MINUTES);
     }
 
