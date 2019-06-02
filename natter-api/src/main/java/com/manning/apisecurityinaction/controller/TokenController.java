@@ -47,9 +47,11 @@ public class TokenController {
     }
 
     public JSONObject logout(Request request, Response response) {
-        var tokenId = request.headers("X-CSRF-Token");
-        if (tokenId == null)
+        var tokenId = request.headers("Authorization");
+        if (tokenId == null || !tokenId.startsWith("Bearer ")) {
             throw new IllegalArgumentException("missing token header");
+        }
+        tokenId = tokenId.substring(7);
 
         tokenStore.revoke(request, tokenId);
 
