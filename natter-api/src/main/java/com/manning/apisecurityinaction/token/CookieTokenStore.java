@@ -47,6 +47,21 @@ public class CookieTokenStore implements TokenStore {
         return Optional.of(token);
     }
 
+    @Override
+    public void revoke(Request request, String tokenId) {
+        var session = request.session(false);
+        if (session == null) return;
+
+        var provided = Base64.getUrlDecoder().decode(tokenId);
+        var computed = sha256(session.id());
+
+        if (!MessageDigest.isEqual(computed, provided)) {
+            return;
+        }
+
+        session.invalidate();
+    }
+
     private static byte[] sha256(String tokenId) {
         try {
             var sha256 = MessageDigest.getInstance("SHA-256");

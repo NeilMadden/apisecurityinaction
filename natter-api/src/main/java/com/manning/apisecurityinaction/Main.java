@@ -64,6 +64,7 @@ public class Main {
 
         before("/sessions", userController::requireAuthentication);
         post("/sessions", tokenController::login);
+        delete("/sessions", tokenController::logout);
 
         get("/logs", auditController::readAuditLog);
 
