@@ -63,8 +63,9 @@ public class Main {
         keyStore.load(new FileInputStream("keystore.p12"),
                 keyPassword);
         var macKey = keyStore.getKey("hmac-key", keyPassword);
+        var encKey = keyStore.getKey("aes-key", keyPassword);
 
-        TokenStore tokenStore = new DatabaseTokenStore(database);
+        TokenStore tokenStore = new DatabaseTokenStore(database, encKey, blindIndexKey);
         tokenStore = new HmacTokenStore(tokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
