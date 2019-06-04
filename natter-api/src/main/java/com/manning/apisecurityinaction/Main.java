@@ -70,8 +70,9 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
+        var tokenWhitelist = new DatabaseTokenStore(database);
         SecureTokenStore tokenStore =
-                new EncryptedTokenStore(new JsonTokenStore(), encKey);
+                new JwtTokenStore((SecretKey) encKey, tokenWhitelist);
 
         var tokenController = new TokenController(tokenStore);
 
