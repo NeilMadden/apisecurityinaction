@@ -11,7 +11,6 @@ import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
-import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.nio.file.*;
@@ -71,9 +70,16 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-        var tokenWhitelist = new DatabaseTokenStore(database);
-        SecureTokenStore tokenStore =
-                new JwtTokenStore((SecretKey) encKey, tokenWhitelist);
+        var clientId = "test";
+        var clientSecret =
+                System.getProperty("client_secret", "password");
+        var introspectionEndpoint =
+                URI.create("https://as.example.com:8443/oauth2/introspect");
+        var revocationEndpoint =
+                URI.create("https://as.example.com:8443/oauth2/token/revoke");
+        SecureTokenStore tokenStore = new OAuth2TokenStore(
+                introspectionEndpoint, revocationEndpoint,
+                clientId, clientSecret);
 
         var tokenController = new TokenController(tokenStore);
 
@@ -85,6 +91,8 @@ public class Main {
         afterAfter(auditController::auditRequestEnd);
 
         before("/sessions", userController::requireAuthentication);
+        before("/sessions",
+                tokenController.requireScope("POST", "create_token"));
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
 
