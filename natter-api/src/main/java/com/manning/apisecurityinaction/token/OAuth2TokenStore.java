@@ -62,7 +62,7 @@ public class OAuth2TokenStore implements SecureTokenStore {
 
             var tmf = TrustManagerFactory.getInstance("PKIX");
             tmf.init(trustedCerts);
-            var sslContext = SSLContext.getInstance("TLSv1.2");
+            var sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, tmf.getTrustManagers(), null);
 
             this.httpClient = HttpClient.newBuilder()
