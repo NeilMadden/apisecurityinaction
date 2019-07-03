@@ -74,7 +74,7 @@ public class Main {
 
         var issuer = "https://openam.example.com:8443/openam/oauth2";
         var jwksUri = URI.create("http://openam.example.com:8080/openam/oauth2/connect/jwk_uri");
-        var tokenStore = new SignedJwtAccessTokenStore(issuer, "test", jwksUri, JWSAlgorithm.ES256);
+        var tokenStore = new SignedJwtAccessTokenStore(issuer, "test", JWSAlgorithm.ES256, jwksUri);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
