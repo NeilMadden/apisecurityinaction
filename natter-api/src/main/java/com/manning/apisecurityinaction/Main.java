@@ -3,6 +3,7 @@ package com.manning.apisecurityinaction;
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
+import com.nimbusds.jose.JWSAlgorithm;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -70,17 +71,10 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-        var clientId = "test";
-        var clientSecret =
-                System.getProperty("client_secret", "password");
-        var introspectionEndpoint =
-                URI.create("https://as.example.com:8443/oauth2/introspect");
-        var revocationEndpoint =
-                URI.create("https://as.example.com:8443/oauth2/token/revoke");
-        SecureTokenStore tokenStore = new OAuth2TokenStore(
-                introspectionEndpoint, revocationEndpoint,
-                clientId, clientSecret);
 
+        var issuer = "https://openam.example.com:8443/openam/oauth2";
+        var jwksUri = URI.create("http://openam.example.com:8080/openam/oauth2/connect/jwk_uri");
+        var tokenStore = new SignedJwtAccessTokenStore(issuer, "test", jwksUri, JWSAlgorithm.ES256);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
