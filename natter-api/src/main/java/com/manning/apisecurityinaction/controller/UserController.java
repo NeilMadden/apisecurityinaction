@@ -13,8 +13,7 @@ import com.lambdaworks.crypto.SCryptUtil;
 import spark.*;
 
 public class UserController {
-    private static final String USERNAME_PATTERN =
-            "[a-zA-Z][a-zA-Z0-9]{1,29}";
+    static final String USERNAME_PATTERN = "[a-zA-Z][a-zA-Z0-9]{1,29}";
 
     private final Database database;
 

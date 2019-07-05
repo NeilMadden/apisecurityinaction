@@ -17,7 +17,7 @@ import java.net.URI;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
-import java.util.Set;
+import java.util.*;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -52,6 +52,7 @@ public class Main {
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
+            !request.pathInfo().equals("/oauth2/access_token") &&
             !"application/json".equals(request.contentType())) {
                 halt(406, new JSONObject().put(
                     "error", "Only application/json supported"
@@ -77,6 +78,18 @@ public class Main {
         var tokenStore = new SignedJwtAccessTokenStore(issuer, "test", JWSAlgorithm.ES256, jwksUri);
         var tokenController = new TokenController(tokenStore);
 
+        var accessTokenStore = new DatabaseTokenStore(database);
+        var secretHash = Base64.getEncoder().encodeToString(
+                AuthorizationServerController.hash("password"));
+        var client = new JSONObject()
+                .put("secret_hash", secretHash)
+                .put("allowed_scope", List.of("create_space", "post_message"));
+        var clients = new JSONObject()
+                .put("test", client);
+
+        var oauthController = new AuthorizationServerController(
+                accessTokenStore, database, clients);
+
         before(userController::authenticate);
         before(tokenController::validateToken);
 
@@ -89,6 +102,8 @@ public class Main {
                 tokenController.requireScope("POST", "create_token"));
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
+
+        post("/oauth2/access_token", oauthController::issueAccessToken);
 
         get("/logs", auditController::readAuditLog);
 
