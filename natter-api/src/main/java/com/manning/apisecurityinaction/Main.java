@@ -1,29 +1,27 @@
 package com.manning.apisecurityinaction;
 
-import static spark.Spark.*;
-
 import java.nio.file.*;
-import java.sql.Connection;
 
+import com.manning.apisecurityinaction.controller.*;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
-
-import com.manning.apisecurityinaction.controller.*;
-
 import spark.*;
+
+import static spark.Spark.*;
 
 public class Main {
 
     public static void main(String... args) throws Exception {
         var datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter", "password");
-        createTables(datasource.getConnection());
+        var database = Database.forDataSource(datasource);
+        createTables(database);
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
 
-        var database = Database.forDataSource(datasource);
+        database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
 
         before(((request, response) -> {
@@ -74,14 +72,9 @@ public class Main {
     response.body(new JSONObject().put("error", ex.getMessage()).toString());
   }
 
-    private static void createTables(Connection connection) throws Exception {
-        try (var conn = connection;
-             var stmt = conn.createStatement()) {
-            conn.setAutoCommit(false);
-            Path path = Paths.get(
-                    Main.class.getResource("/schema.sql").toURI());
-            stmt.execute(Files.readString(path));
-            conn.commit();
-        }
+    private static void createTables(Database database) throws Exception {
+        var path = Paths.get(
+                Main.class.getResource("/schema.sql").toURI());
+        database.update(Files.readString(path));
     }
 }
