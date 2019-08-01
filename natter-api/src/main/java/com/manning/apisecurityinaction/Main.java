@@ -46,7 +46,7 @@ public class Main {
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
             !"application/json".equals(request.contentType())) {
-                halt(406, new JSONObject().put(
+                halt(415, new JSONObject().put(
                     "error", "Only application/json supported"
                 ).toString());
             }
@@ -99,10 +99,13 @@ public class Main {
             moderatorController::deletePost);
 
         afterAfter((request, response) -> {
-            response.type("application/json");
+            response.type("application/json; charset=utf-8");
             response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-Frame-Options", "deny");
             response.header("X-XSS-Protection", "1; mode=block");
             response.header("Cache-Control", "private, max-age=0");
+            response.header("Content-Security-Policy",
+                "default-src 'none'; frame-ancestors 'none'; sandbox");
             response.header("Server", "");
         });
 
