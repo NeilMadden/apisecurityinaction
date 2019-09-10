@@ -1,16 +1,14 @@
 package com.manning.apisecurityinaction.controller;
 
-import static spark.Spark.halt;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
-import org.dalesbred.Database;
-import org.json.JSONObject;
-
-import com.lambdaworks.crypto.SCryptUtil;
-
+import com.lambdaworks.crypto.*;
+import org.dalesbred.*;
+import org.json.*;
 import spark.*;
+
+import java.nio.charset.*;
+import java.util.*;
+
+import static spark.Spark.*;
 
 public class UserController {
     private static final String USERNAME_PATTERN =
