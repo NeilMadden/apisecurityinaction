@@ -3,6 +3,7 @@ package com.manning.apisecurityinaction;
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
+import org.checkerframework.checker.units.qual.A;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -13,6 +14,7 @@ import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
 import javax.crypto.SecretKey;
 import java.io.FileInputStream;
+import java.net.URI;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
@@ -70,10 +72,12 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-        var tokenWhitelist = new DatabaseTokenStore(database);
-        SecureTokenStore tokenStore =
-                new JwtTokenStore((SecretKey) encKey, tokenWhitelist);
-
+        var clientId = "testClient";
+        var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
+        var introspectionEndpoint =
+                URI.create("https://as.example.com:8443/oauth2/introspect");
+        SecureTokenStore tokenStore = new OAuth2TokenStore(
+                introspectionEndpoint, clientId, clientSecret);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
