@@ -1,11 +1,10 @@
 package com.manning.apisecurityinaction.controller;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Base64;
 
 import com.lambdaworks.crypto.SCryptUtil;
 import org.dalesbred.Database;
-import org.dalesbred.query.QueryBuilder;
 import org.json.JSONObject;
 import spark.*;
 
@@ -105,21 +104,15 @@ public class UserController {
 
             var spaceId = Long.parseLong(request.params(":spaceId"));
             var username = (String) request.attribute("subject");
-            List<String> groups = request.attribute("groups");
 
-            var queryBuilder = new QueryBuilder(
-                    "SELECT perms FROM permissions " +
-                        "WHERE space_id = ? " +
-                        "AND (user_or_group_id = ?", spaceId, username);
+            var perms = database.findOptional(String.class,
+                    "SELECT rp.perms " +
+                    "  FROM role_permissions rp JOIN user_roles ur" +
+                    "    ON rp.role_id = ur.role_id" +
+                    " WHERE ur.space_id = ? AND ur.user_id = ?",
+                    spaceId, username).orElse("");
 
-            for (var group : groups) {
-                queryBuilder.append(" OR user_or_group_id = ?", group);
-            }
-            queryBuilder.append(")");
-
-            var perms = database.findAll(String.class,
-                    queryBuilder.build());
-            if (perms.stream().noneMatch(p -> p.contains(permission))) {
+            if (!perms.contains(permission)) {
                 halt(403);
             }
         };
