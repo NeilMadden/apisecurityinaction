@@ -42,7 +42,7 @@ public class SpaceController {
               "VALUES(?, ?, ?);", spaceId, spaceName, owner);
 
       database.updateUnique(
-          "INSERT INTO permissions(space_id, user_id, perms) " +
+          "INSERT INTO permissions(space_id, user_or_group_id, perms) " +
                   "VALUES(?, ?, ?)", spaceId, owner, "rwd");
 
       response.status(201);
@@ -128,7 +128,7 @@ public class SpaceController {
     }
 
     database.updateUnique(
-            "INSERT INTO permissions(space_id, user_id, perms) " +
+            "INSERT INTO permissions(space_id, user_or_group_id, perms) " +
                     "VALUES(?, ?, ?)", spaceId, userToAdd, perms);
 
     response.status(200);
