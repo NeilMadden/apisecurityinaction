@@ -46,26 +46,11 @@ public class UserController {
     }
 
     public void authenticate(Request request, Response response) {
-        var authHeader = request.headers("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Basic ")) {
-            return;
-        }
+        var credentials = getCredentials(request);
+        if (credentials == null) return;
 
-        var offset = "Basic ".length();
-        var credentials = new String(Base64.getDecoder().decode(
-                authHeader.substring(offset)), StandardCharsets.UTF_8);
-
-        var components = credentials.split(":", 2);
-        if (components.length != 2) {
-            throw new IllegalArgumentException("invalid auth header");
-        }
-
-        var username = components[0];
-        var password = components[1];
-
-        if (!username.matches(USERNAME_PATTERN)) {
-            throw new IllegalArgumentException("invalid username");
-        }
+        var username = credentials[0];
+        var password = credentials[1];
 
         var hash = database.findOptional(String.class,
                 "SELECT pw_hash FROM users WHERE user_id = ?", username);
@@ -78,6 +63,29 @@ public class UserController {
                         "WHERE user_id = ?", username);
             request.attribute("groups", groups);
         }
+    }
+
+    String[] getCredentials(Request request) {
+        var authHeader = request.headers("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Basic ")) {
+            return null;
+        }
+
+        var offset = "Basic ".length();
+        var credentials = new String(Base64.getDecoder().decode(
+                authHeader.substring(offset)), StandardCharsets.UTF_8);
+
+        var components = credentials.split(":", 2);
+        if (components.length != 2) {
+            throw new IllegalArgumentException("invalid auth header");
+        }
+
+        var username = components[0];
+        if (!username.matches(USERNAME_PATTERN)) {
+            throw new IllegalArgumentException("invalid username");
+        }
+
+        return components;
     }
 
     public void requireAuthentication(Request request, Response response) {

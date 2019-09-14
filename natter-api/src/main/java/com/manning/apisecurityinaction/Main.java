@@ -41,7 +41,12 @@ public class Main {
 
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
-        var userController = new UserController(database);
+
+        var ldapUrl = "ldap://localhost:50389/";
+        var baseDn = "dc=openam,dc=forgerock,dc=org";
+
+        var userController = new LdapUserController(database,
+                ldapUrl, baseDn, "cn=Directory Manager", "cangetinam");
 
         var rateLimiter = RateLimiter.create(2.0d);
         before((request, response) -> {
