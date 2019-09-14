@@ -1,9 +1,15 @@
 package com.manning.apisecurityinaction;
 
+import java.io.FileInputStream;
+import java.net.URI;
+import java.nio.file.*;
+import java.security.KeyStore;
+import java.sql.Connection;
+import java.util.Set;
+
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
-import org.checkerframework.checker.units.qual.A;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -11,14 +17,6 @@ import org.json.*;
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
-
-import javax.crypto.SecretKey;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.nio.file.*;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.util.Set;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -41,12 +39,7 @@ public class Main {
 
         var database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
-
-        var ldapUrl = "ldap://localhost:50389/";
-        var baseDn = "dc=openam,dc=forgerock,dc=org";
-
-        var userController = new LdapUserController(database,
-                ldapUrl, baseDn, "cn=Directory Manager", "cangetinam");
+        var userController = new UserController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
         before((request, response) -> {
