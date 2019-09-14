@@ -49,8 +49,8 @@ CREATE TABLE user_roles(
     space_id INT NOT NULL REFERENCES spaces(space_id),
     user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
     role_id VARCHAR(30) NOT NULL REFERENCES role_permissions(role_id),
-    PRIMARY KEY (space_id, user_id)
 );
+CREATE INDEX user_roles_idx ON user_roles(space_id, user_id);
 
 CREATE TABLE tokens(
     token_id VARCHAR(30) PRIMARY KEY,

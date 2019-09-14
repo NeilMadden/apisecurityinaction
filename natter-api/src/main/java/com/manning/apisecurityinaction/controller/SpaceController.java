@@ -43,9 +43,12 @@ public class SpaceController {
           "INSERT INTO spaces(space_id, name, owner) " +
               "VALUES(?, ?, ?);", spaceId, spaceName, owner);
 
-      database.updateUnique(
-          "INSERT INTO user_roles(space_id, user_id, role_id) " +
-                  "VALUES(?, ?, ?)", spaceId, owner, "owner");
+      // Grant all roles to the owner
+      for (var role : DEFINED_ROLES) {
+        database.updateUnique(
+                "INSERT INTO user_roles(space_id, user_id, role_id) " +
+                        "VALUES(?, ?, ?)", spaceId, owner, role);
+      }
 
       response.status(201);
       response.header("Location", "/spaces/" + spaceId);
@@ -123,20 +126,25 @@ public class SpaceController {
     var json = new JSONObject(request.body());
     var spaceId = Long.parseLong(request.params(":spaceId"));
     var userToAdd = json.getString("username");
-    var role = json.optString("role", "member");
+    var roles = json.optJSONArray("roles");
+    if (roles == null) {
+      roles = new JSONArray().put("member");
+    }
 
-    if (!DEFINED_ROLES.contains(role)) {
+    if (!DEFINED_ROLES.containsAll(roles.toList())) {
       throw new IllegalArgumentException("invalid role");
     }
 
-    database.updateUnique(
-            "INSERT INTO user_roles(space_id, user_id, role_id)" +
-                    " VALUES(?, ?, ?)", spaceId, userToAdd, role);
+    for (var role : roles.toList()) {
+      database.updateUnique(
+              "INSERT INTO user_roles(space_id, user_id, role_id)" +
+                      " VALUES(?, ?, ?)", spaceId, userToAdd, role);
+    }
 
     response.status(200);
     return new JSONObject()
             .put("username", userToAdd)
-            .put("role", role);
+            .put("roles", roles);
   }
 
   public static class Message {

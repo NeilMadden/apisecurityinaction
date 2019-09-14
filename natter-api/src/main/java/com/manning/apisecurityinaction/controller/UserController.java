@@ -5,6 +5,7 @@ import java.util.Base64;
 
 import com.lambdaworks.crypto.SCryptUtil;
 import org.dalesbred.Database;
+import org.dalesbred.query.QueryBuilder;
 import org.json.JSONObject;
 import spark.*;
 
@@ -105,14 +106,25 @@ public class UserController {
             var spaceId = Long.parseLong(request.params(":spaceId"));
             var username = (String) request.attribute("subject");
 
-            var perms = database.findOptional(String.class,
+            var query = new QueryBuilder(
                     "SELECT rp.perms " +
                     "  FROM role_permissions rp JOIN user_roles ur" +
                     "    ON rp.role_id = ur.role_id" +
                     " WHERE ur.space_id = ? AND ur.user_id = ?",
-                    spaceId, username).orElse("");
+                    spaceId, username);
 
-            if (!perms.contains(permission)) {
+            // If the session is restricted to a single role
+            // then enforce that restriction here.
+            var role = (String) request.attribute("role");
+            if (role != null) {
+                query.append(" AND ur.role_id = ?", role);
+            }
+
+            // With multiple roles this could return more than one
+            // set of permissions
+            var perms = database.findAll(String.class, query.build());
+
+            if (perms.stream().noneMatch(p -> p.contains(permission))) {
                 halt(403);
             }
         };
