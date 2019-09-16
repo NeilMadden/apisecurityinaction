@@ -84,6 +84,9 @@ public class Main {
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
+        var droolsController = new DroolsAccessController();
+        before("/*", droolsController::enforcePolicy);
+
         before("/sessions", userController::requireAuthentication);
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);

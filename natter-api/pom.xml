@@ -11,6 +11,7 @@
     <exec.mainClass>
       com.manning.apisecurityinaction.Main
     </exec.mainClass>
+    <drools.version>7.26.0.Final</drools.version>
   </properties>
   <dependencies>
     <dependency>
@@ -52,6 +53,23 @@
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
       <version>7.2.1</version>
+    </dependency>
+
+    <!-- Drools rule engine dependencies -->
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-api</artifactId>
+      <version>${drools.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-core</artifactId>
+      <version>${drools.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-compiler</artifactId>
+      <version>${drools.version}</version>
     </dependency>
   </dependencies>
 </project>
