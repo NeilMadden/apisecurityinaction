@@ -4,7 +4,8 @@ This repository contains source code to accompany the upcoming book
 API Security in Action, written by Neil Madden and to be published by
 Manning Publications some time next year. If you have stumbled across
 this repository by accident, it is unlikely to make much sense on its
-own at this stage. Please see *TBC* for early access.
+own at this stage. Please see [Manning's website](https://www.manning.com/books/api-security-in-action?a_aid=api_security_in_action&a_bid=6806e3b6)
+for early access.
 
 The git repo is organized with a separate branch for each chapter,
 starting with Chapter 2. Actually there are two (or more) branches
@@ -14,6 +15,28 @@ The branches named "chapter02-end", "chapter03-end" etc give the
 final source code after all the alterations in that chapter. Typically
 the source code at the end of a chapter is also identical to the start
 of the next chapter.
+
+The source code can also be downloaded as a zip file from the early
+access website.
+
+## Prerequisites
+
+The following are needed to run the code examples:
+
+ - Java 11 or later. See https://adoptopenjdk.net for installers.
+ - A recent version of [Apache Maven](https://maven.apache.org) - I use 3.6.1.
+ - For testing, [curl](https://curl.haxx.se). On Mac OS X you should install
+ a version of curl linked against OpenSSL rather than Secure Transport, otherwise
+ you may need to adjust the examples in the book.
+ - I highly recommend installing [mkcert](https://github.com/FiloSottile/mkcert)
+ for working with SSL certificates from chapter 3 onwards.
+
+The API server for each chapter can be started using the command
+
+    mvn clean compile exec:java
+
+This will start the Spark/Jetty server running on port 4567. See chapter
+descriptions for HTTP requests that can be
 
 ## Chapters
 
