@@ -7,14 +7,10 @@ import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-/**
- * Sample indicating how to revoke an OAuth 2 access or refresh
- * token.
- */
 public class RevokeAccessToken {
 
     private static final URI revocationEndpoint =
-            URI.create("https://openam.example.com:8443/openam/oauth2/token/revoke");
+            URI.create("https://as.example.com:8443/oauth2/token/revoke");
 
     public static void main(String...args) throws Exception {
 
@@ -35,11 +31,12 @@ public class RevokeAccessToken {
         var httpClient = HttpClient.newHttpClient();
 
         var form = "token=" + URLEncoder.encode(token, UTF_8) +
-                "&token_type_hint=access_token";
+        "&token_type_hint=access_token";
 
         var httpRequest = HttpRequest.newBuilder()
                 .uri(revocationEndpoint)
-                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Content-Type",
+                        "application/x-www-form-urlencoded")
                 .header("Authorization", authorization)
                 .POST(HttpRequest.BodyPublishers.ofString(form))
                 .build();

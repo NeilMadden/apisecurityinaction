@@ -1,9 +1,15 @@
 package com.manning.apisecurityinaction;
 
+import java.io.FileInputStream;
+import java.net.URI;
+import java.nio.file.*;
+import java.security.KeyStore;
+import java.sql.Connection;
+import java.util.*;
+
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
-import com.nimbusds.jose.JWSAlgorithm;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -11,13 +17,6 @@ import org.json.*;
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
-
-import java.io.FileInputStream;
-import java.net.URI;
-import java.nio.file.*;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.util.*;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -54,7 +53,7 @@ public class Main {
             if (request.requestMethod().equals("POST") &&
             !request.pathInfo().equals("/oauth2/access_token") &&
             !"application/json".equals(request.contentType())) {
-                halt(406, new JSONObject().put(
+                halt(415, new JSONObject().put(
                     "error", "Only application/json supported"
                 ).toString());
             }
@@ -72,10 +71,11 @@ public class Main {
                 .put("alg", "HS256")
                 .put("typ", "JWT");
 
-
-        var issuer = "https://openam.example.com:8443/openam/oauth2";
-        var jwksUri = URI.create("http://openam.example.com:8080/openam/oauth2/connect/jwk_uri");
-        var tokenStore = new SignedJwtAccessTokenStore(issuer, "test", JWSAlgorithm.ES256, jwksUri);
+        var clientId = "testClient";
+        var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
+        var introspectionEndpoint =
+                URI.create("https://as.example.com:8443/oauth2/introspect");
+        SecureTokenStore tokenStore = new DatabaseTokenStore(database);
         var tokenController = new TokenController(tokenStore);
 
         var accessTokenStore = new DatabaseTokenStore(database);
@@ -96,6 +96,9 @@ public class Main {
         var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
+
+        var droolsController = new DroolsAccessController();
+        before("/*", droolsController::enforcePolicy);
 
         before("/sessions", userController::requireAuthentication);
         before("/sessions",
@@ -150,10 +153,13 @@ public class Main {
             moderatorController::deletePost);
 
         afterAfter((request, response) -> {
-            response.type("application/json");
+            response.type("application/json; charset=utf-8");
             response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-Frame-Options", "deny");
             response.header("X-XSS-Protection", "1; mode=block");
             response.header("Cache-Control", "private, max-age=0");
+            response.header("Content-Security-Policy",
+                "default-src 'none'; frame-ancestors 'none'; sandbox");
             response.header("Server", "");
         });
 

@@ -1,14 +1,14 @@
 package com.manning.apisecurityinaction.token;
 
+import java.net.*;
+import java.text.ParseException;
+import java.util.Optional;
+
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.jwk.source.*;
 import com.nimbusds.jose.proc.*;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import spark.Request;
-
-import java.net.*;
-import java.text.ParseException;
-import java.util.Optional;
 
 public class SignedJwtAccessTokenStore implements SecureTokenStore {
 
@@ -57,18 +57,16 @@ public class SignedJwtAccessTokenStore implements SecureTokenStore {
 
             var expiry = claims.getExpirationTime().toInstant();
             var subject = claims.getSubject();
-
             var token = new Token(expiry, subject);
 
             String scope;
             try {
-                scope = claims.getStringClaim("scope");
+                    scope = claims.getStringClaim("scope");
             } catch (ParseException e) {
-                scope = String.join(" ", claims.getStringListClaim("scope"));
+                    scope = String.join(" ",
+                    claims.getStringListClaim("scope"));
             }
-
             token.attributes.put("scope", scope);
-
             return Optional.of(token);
 
         } catch (ParseException | BadJOSEException | JOSEException e) {

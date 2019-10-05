@@ -29,6 +29,11 @@ public class TokenController {
             token.attributes.put("scope", scope);
         }
 
+        var role = request.queryParams("role");
+        if (role != null) {
+            token.attributes.put("role", role);
+        }
+
         var tokenId = tokenStore.create(request, token);
 
         response.status(201);
