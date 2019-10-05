@@ -46,3 +46,13 @@ of the next chapter.
 
  - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter07)
  - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter07-end)
+
+### Chapter 8 - Identity-based access control
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter08)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter08-end)
+
+### Chapter 9 - Capability security and Macaroons
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter09)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter09-end)
