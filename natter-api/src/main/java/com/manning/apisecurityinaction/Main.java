@@ -100,6 +100,10 @@ public class Main {
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);
 
+        before("/spaces/:spaceId/messages", userController::lookupPermissions);
+        before("/spaces/:spaceId/messages/*", userController::lookupPermissions);
+        before("/spaces/:spaceId/members", userController::lookupPermissions);
+
         before("/spaces/*/messages",
                 tokenController.requireScope("POST", "post_message"));
         before("/spaces/:spaceId/messages",

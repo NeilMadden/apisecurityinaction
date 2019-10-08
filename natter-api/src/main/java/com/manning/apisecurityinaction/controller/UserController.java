@@ -95,6 +95,29 @@ public class UserController {
         }
     }
 
+    public void lookupPermissions(Request request, Response response) {
+        var spaceId = Long.parseLong(request.params(":spaceId"));
+        var username = (String) request.attribute("subject");
+
+        if (username == null) return;
+
+        var query = new QueryBuilder(
+                "SELECT rp.perms " +
+                        "  FROM role_permissions rp JOIN user_roles ur" +
+                        "    ON rp.role_id = ur.role_id" +
+                        " WHERE ur.space_id = ? AND ur.user_id = ?",
+                spaceId, username);
+
+        var role = (String) request.attribute("role");
+        if (role != null) {
+            query.append(" AND ur.role_id = ?", role);
+        }
+
+        var perms = String.join("",
+                database.findAll(String.class, query.build()));
+        request.attribute("perms", perms);
+    }
+
     public Filter requirePermission(String method, String permission) {
         return (request, response) -> {
             if (!method.equals(request.requestMethod())) {
@@ -103,28 +126,8 @@ public class UserController {
 
             requireAuthentication(request, response);
 
-            var spaceId = Long.parseLong(request.params(":spaceId"));
-            var username = (String) request.attribute("subject");
-
-            var query = new QueryBuilder(
-                    "SELECT rp.perms " +
-                    "  FROM role_permissions rp JOIN user_roles ur" +
-                    "    ON rp.role_id = ur.role_id" +
-                    " WHERE ur.space_id = ? AND ur.user_id = ?",
-                    spaceId, username);
-
-            // If the session is restricted to a single role
-            // then enforce that restriction here.
-            var role = (String) request.attribute("role");
-            if (role != null) {
-                query.append(" AND ur.role_id = ?", role);
-            }
-
-            // With multiple roles this could return more than one
-            // set of permissions
-            var perms = database.findAll(String.class, query.build());
-
-            if (perms.stream().noneMatch(p -> p.contains(permission))) {
+            var perms = request.<String>attribute("perms");
+            if (!perms.contains(permission)) {
                 halt(403);
             }
         };
