@@ -14,9 +14,12 @@ public class SpaceController {
           Set.of("owner", "moderator", "member", "observer");
 
   private final Database database;
+  private final CapabilityController capabilityController;
 
-  public SpaceController(Database database) {
+  public SpaceController(Database database,
+                         CapabilityController capabilityController) {
     this.database = database;
+    this.capabilityController = capabilityController;
   }
 
   public JSONObject createSpace(Request request, Response response) {
@@ -43,19 +46,15 @@ public class SpaceController {
           "INSERT INTO spaces(space_id, name, owner) " +
               "VALUES(?, ?, ?);", spaceId, spaceName, owner);
 
-      // Grant all roles to the owner
-      for (var role : DEFINED_ROLES) {
-        database.updateUnique(
-                "INSERT INTO user_roles(space_id, user_id, role_id) " +
-                        "VALUES(?, ?, ?)", spaceId, owner, role);
-      }
+      var uri = capabilityController.createUri(request,
+              "/spaces/" + spaceId, "rwd");
 
       response.status(201);
-      response.header("Location", "/spaces/" + spaceId);
+      response.header("Location", uri.toASCIIString());
 
       return new JSONObject()
-          .put("name", spaceName) .put("uri", "/spaces/" + spaceId);
-
+              .put("name", spaceName)
+              .put("uri", uri);
     });
   }
 

@@ -37,8 +37,19 @@ public class Main {
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
 
+
+        var keyPassword = System.getProperty("keystore.password",
+                "changeit").toCharArray();
+        var keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream("keystore.p12"),
+                keyPassword);
+        var macKey = keyStore.getKey("hmac-key", keyPassword);
+        var encKey = keyStore.getKey("aes-key", keyPassword);
+
         var database = Database.forDataSource(datasource);
-        var spaceController = new SpaceController(database);
+        var capController = new CapabilityController(
+                new DatabaseTokenStore(database));
+        var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
@@ -58,13 +69,6 @@ public class Main {
             }
         }));
 
-        var keyPassword = System.getProperty("keystore.password",
-                "changeit").toCharArray();
-        var keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream("keystore.p12"),
-                keyPassword);
-        var macKey = keyStore.getKey("hmac-key", keyPassword);
-        var encKey = keyStore.getKey("aes-key", keyPassword);
 
         var header = new JSONObject()
                 .put("alg", "HS256")
@@ -100,9 +104,9 @@ public class Main {
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);
 
-        before("/spaces/:spaceId/messages", userController::lookupPermissions);
-        before("/spaces/:spaceId/messages/*", userController::lookupPermissions);
-        before("/spaces/:spaceId/members", userController::lookupPermissions);
+        before("/spaces/:spaceId/messages", capController::lookupPermissions);
+        before("/spaces/:spaceId/messages/*", capController::lookupPermissions);
+        before("/spaces/:spaceId/members", capController::lookupPermissions);
 
         before("/spaces/*/messages",
                 tokenController.requireScope("POST", "post_message"));
