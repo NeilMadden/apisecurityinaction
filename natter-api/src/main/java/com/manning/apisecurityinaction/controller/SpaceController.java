@@ -48,13 +48,22 @@ public class SpaceController {
 
       var uri = capabilityController.createUri(request,
               "/spaces/" + spaceId, "rwd");
+      var messagesUri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages", "rwd");
+      var messagesReadWriteUri = capabilityController.createUri(
+              request, "/spaces/" + spaceId + "/messages", "rw");
+      var messagesReadOnlyUri = capabilityController.createUri(
+              request, "/spaces/" + spaceId + "/messages", "r");
 
       response.status(201);
       response.header("Location", uri.toASCIIString());
 
       return new JSONObject()
               .put("name", spaceName)
-              .put("uri", uri);
+              .put("uri", uri)
+              .put("messages-rwd", messagesUri)
+              .put("messages-rw", messagesReadWriteUri)
+              .put("messages-r", messagesReadOnlyUri);
     });
   }
 
@@ -84,9 +93,15 @@ public class SpaceController {
           spaceId, msgId, user, message);
 
       response.status(201);
-      var uri = "/spaces/" + spaceId + "/messages/" + msgId;
-      response.header("Location", uri);
-      return new JSONObject().put("uri", uri);
+      var uri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages/" + msgId, "rd");
+      var readOnlyUri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages/" + msgId, "r");
+
+      response.header("Location", uri.toASCIIString());
+      return new JSONObject()
+              .put("uri", uri)
+              .put("read-only", readOnlyUri);
     });
   }
 
@@ -115,9 +130,12 @@ public class SpaceController {
             "WHERE space_id = ? AND msg_time >= ?;",
         spaceId, since);
 
+    var perms = request.<String>attribute("perms")
+            .replace("w", "");
     response.status(200);
     return new JSONArray(messages.stream()
         .map(msgId -> "/spaces/" + spaceId + "/messages/" + msgId)
+        .map(path -> capabilityController.createUri(request, path, perms))
         .collect(Collectors.toList()));
   }
 
