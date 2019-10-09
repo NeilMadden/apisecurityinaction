@@ -96,10 +96,10 @@ public class UserController {
     }
 
     public void lookupPermissions(Request request, Response response) {
+        requireAuthentication(request, response);
+
         var spaceId = Long.parseLong(request.params(":spaceId"));
         var username = (String) request.attribute("subject");
-
-        if (username == null) return;
 
         var query = new QueryBuilder(
                 "SELECT rp.perms " +
@@ -123,8 +123,6 @@ public class UserController {
             if (!method.equals(request.requestMethod())) {
                 return;
             }
-
-            requireAuthentication(request, response);
 
             var perms = request.<String>attribute("perms");
             if (perms == null || !perms.contains(permission)) {
