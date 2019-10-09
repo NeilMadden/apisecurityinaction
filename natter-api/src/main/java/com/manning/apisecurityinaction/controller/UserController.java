@@ -127,7 +127,7 @@ public class UserController {
             requireAuthentication(request, response);
 
             var perms = request.<String>attribute("perms");
-            if (!perms.contains(permission)) {
+            if (perms == null || !perms.contains(permission)) {
                 halt(403);
             }
         };
