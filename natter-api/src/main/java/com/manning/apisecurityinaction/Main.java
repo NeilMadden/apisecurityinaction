@@ -48,7 +48,7 @@ public class Main {
 
         var database = Database.forDataSource(datasource);
         var capController = new CapabilityController(
-                new DatabaseTokenStore(database));
+                new EncryptedTokenStore(new JsonTokenStore(), encKey));
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 

@@ -29,7 +29,7 @@ public class JsonTokenStore implements TokenStore {
             var decoded = Base64.getUrlDecoder().decode(tokenId);
             var json = new JSONObject(new String(decoded, UTF_8));
             var expiry = Instant.ofEpochSecond(json.getInt("exp"));
-            var username = json.getString("sub");
+            var username = json.optString("sub");
             var audience = json.getJSONArray("aud").toList();
             var attrs = json.getJSONObject("attrs");
 
