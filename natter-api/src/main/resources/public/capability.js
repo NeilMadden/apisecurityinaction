@@ -2,9 +2,10 @@ function getCap(url, callback) {
     let capUrl = new URL(url);
     let token = capUrl.username;
     capUrl.username = '';
-    capUrl.search = '?access_token=' + encodeURIComponent(token);
 
-    return fetch(capUrl.href)
+    return fetch(capUrl.href, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
     .then(response => response.json())
     .then(callback)
     .catch(err => console.error('Error: ', err));

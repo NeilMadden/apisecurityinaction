@@ -33,8 +33,10 @@ public class CapabilityController {
     }
 
     public void lookupPermissions(Request request, Response response) {
-        var tokenId = request.queryParams("access_token");
-        if (tokenId == null) return;
+        var authHeader = request.headers("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return;
+        var tokenId = authHeader.substring(7).trim();
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             var tokenPath = token.attributes.get("path");
