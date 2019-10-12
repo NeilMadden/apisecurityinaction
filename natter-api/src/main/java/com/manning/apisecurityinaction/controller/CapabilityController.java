@@ -1,6 +1,6 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.net.URI;
+import java.net.*;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -17,15 +17,19 @@ public class CapabilityController {
     }
 
     public URI createUri(Request request, String path, String perms) {
-
         var token = new Token(Instant.MAX, null);
         token.attributes.put("path", path);
         token.attributes.put("perms", perms);
 
         var tokenId = tokenStore.create(request, token);
 
-        var uri = URI.create(request.url());
-        return uri.resolve(path + "?access_token=" + tokenId);
+        var base = URI.create(request.url());
+        try {
+            return new URI(base.getScheme(), tokenId, base.getHost(),
+                    base.getPort(), path, null, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void lookupPermissions(Request request, Response response) {

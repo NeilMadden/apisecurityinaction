@@ -1,0 +1,27 @@
+<html>
+<head>
+    <title>Capability test page</title>
+    <meta http-equiv="Cache-Control" content="max-age=86400"/>
+    <script type="text/javascript" src="capability.js"></script>
+    <script type="text/javascript">
+     let creds = atob('demo:password');
+        fetch("https://localhost:4567/spaces", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic demo:password'
+            }
+        })
+    </script>
+</head>
+<body>
+<h1>Natter</h1>
+<a href="https://eyJhdWQiOlsiaHR0cHM6Ly9sb2NhbGhvc3Q6NDU2NyJdLCJleHAiOjMxNTU2ODg5ODY0NDAzMTk5LCJhdHRycyI6eyJwYXRoIjoiL3NwYWNlcy8xL21lc3NhZ2VzIiwicGVybXMiOiJyIn19.86eU8xWo7PXQ4MBNHWYZRdeqlnU7V8G4i5qmmtiRd9E@localhost:4567/spaces/1/messages""
+   onclick="return loadMessages(this)">
+    Load messages
+</a>
+<table id="messages">
+    <tr><th>Author</th><th>Time</th><th>Message</th></tr>
+</table>
+</body>
+</html>
