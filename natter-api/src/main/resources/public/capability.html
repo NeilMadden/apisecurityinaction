@@ -3,16 +3,6 @@
     <title>Capability test page</title>
     <meta http-equiv="Cache-Control" content="max-age=86400"/>
     <script type="text/javascript" src="capability.js"></script>
-    <script type="text/javascript">
-     let creds = atob('demo:password');
-        fetch("https://localhost:4567/spaces", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Basic demo:password'
-            }
-        })
-    </script>
 </head>
 <body>
 <h1>Natter</h1>
