@@ -42,11 +42,10 @@ public class TokenController {
     }
 
     public void validateToken(Request request, Response response) {
-        var tokenId = request.headers("Authorization");
-        if (tokenId == null || !tokenId.startsWith("Bearer ")) {
+        var tokenId = request.headers("X-CSRF-Token");
+        if (tokenId == null) {
             return;
         }
-        tokenId = tokenId.substring(7);
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             if (Instant.now().isBefore(token.expiry)) {

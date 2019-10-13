@@ -4,7 +4,10 @@ function getCap(url, callback) {
     capUrl.username = '';
 
     return fetch(capUrl.href, {
-        headers: { 'Authorization': 'Bearer ' + token }
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'X-CSRF-Token': localStorage.getItem('token')
+        }
     })
     .then(response => response.json())
     .then(callback)
