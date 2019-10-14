@@ -54,6 +54,11 @@
       <artifactId>nimbus-jose-jwt</artifactId>
       <version>7.2.1</version>
     </dependency>
+    <dependency>
+      <groupId>com.github.nitram509</groupId>
+      <artifactId>jmacaroons</artifactId>
+      <version>0.4.1</version>
+    </dependency>
 
     <!-- Drools rule engine dependencies -->
     <dependency>

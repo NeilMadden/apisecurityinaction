@@ -36,7 +36,7 @@ public class Main {
         createTables(datasource.getConnection());
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
-
+        var database = Database.forDataSource(datasource);
 
         var keyPassword = System.getProperty("keystore.password",
                 "changeit").toCharArray();
@@ -46,9 +46,8 @@ public class Main {
         var macKey = keyStore.getKey("hmac-key", keyPassword);
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
-        var database = Database.forDataSource(datasource);
         var capController = new CapabilityController(
-                new HmacTokenStore(new JsonTokenStore(), macKey));
+                new MacaroonTokenStore(new JsonTokenStore(), macKey));
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
