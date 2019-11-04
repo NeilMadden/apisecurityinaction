@@ -2,7 +2,6 @@ package com.manning.apisecurityinaction;
 
 import java.io.FileInputStream;
 import java.net.URI;
-import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
@@ -18,6 +17,7 @@ import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
 
@@ -172,11 +172,10 @@ public class Main {
 
     private static void createTables(Connection connection) throws Exception {
         try (var conn = connection;
-             var stmt = conn.createStatement()) {
+             var stmt = conn.createStatement();
+             var in = Main.class.getResourceAsStream("/schema.sql")) {
             conn.setAutoCommit(false);
-            Path path = Paths.get(
-                    Main.class.getResource("/schema.sql").toURI());
-            stmt.execute(Files.readString(path));
+            stmt.execute(new String(in.readAllBytes(), UTF_8));
             conn.commit();
         }
     }
