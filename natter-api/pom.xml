@@ -77,4 +77,32 @@
       <version>${drools.version}</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>1.7.0</version>
+        <configuration>
+          <to>
+            <image>apisecurityinaction/natter-api</image>
+          </to>
+          <from>
+            <image>gcr.io/distroless/java:11</image>
+          </from>
+          <container>
+            <mainClass>${exec.mainClass}</mainClass>
+            <jvmFlags>
+              <jvmFlag>-Djava.security.egd=file:/dev/urandom</jvmFlag>
+            </jvmFlags>
+            <ports>
+              <port>4567</port>
+            </ports>
+            <user>1000:1000</user>
+          </container>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

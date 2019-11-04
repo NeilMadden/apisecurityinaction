@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: natter-api
+  labels:
+    app: natter
+spec:
+  containers:
+    - name: natter-api
+      image: apisecurityinaction/natter-api
+      imagePullPolicy: Never
+      ports:
+      - containerPort: 4567
