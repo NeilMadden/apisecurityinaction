@@ -27,15 +27,17 @@ public class Main {
         EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
                 new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
-        secure("localhost.p12", "changeit", null, null);
+//        secure("localhost.p12", "changeit", null, null);
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
+        var jdbcUrl = args.length > 1 ? args[1] : "jdbc:h2:mem:natter";
+
         var datasource = JdbcConnectionPool.create(
-            "jdbc:h2:mem:natter", "natter", "password");
+            jdbcUrl, "natter", "password");
         createTables(datasource.getConnection());
         datasource = JdbcConnectionPool.create(
-            "jdbc:h2:mem:natter", "natter_api_user", "password");
+            jdbcUrl, "natter_api_user", "password");
         var database = Database.forDataSource(datasource);
 
         var keyPassword = System.getProperty("keystore.password",
