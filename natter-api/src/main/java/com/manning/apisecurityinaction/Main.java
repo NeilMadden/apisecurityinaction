@@ -1,8 +1,6 @@
 package com.manning.apisecurityinaction;
 
-import java.io.FileInputStream;
 import java.net.URI;
-import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
 
@@ -31,8 +29,7 @@ public class Main {
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
-        var jdbcUrl = args.length > 1 ? args[1] : "jdbc:h2:mem:natter";
-
+        var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
             jdbcUrl, "natter", "password");
         createTables(datasource.getConnection());
@@ -40,16 +37,10 @@ public class Main {
             jdbcUrl, "natter_api_user", "password");
         var database = Database.forDataSource(datasource);
 
-        var keyPassword = System.getProperty("keystore.password",
-                "changeit").toCharArray();
-        var keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream("keystore.p12"),
-                keyPassword);
-        var macKey = keyStore.getKey("hmac-key", keyPassword);
-        var encKey = keyStore.getKey("aes-key", keyPassword);
-
-        var capController = new CapabilityController(
-                new MacaroonTokenStore(new JsonTokenStore(), macKey));
+        SecureTokenStore tokenStore = new RemoteTokenStore(
+                "http://natter-token-service:4567/tokens");
+        var capController = new CapabilityController(tokenStore);
+        var tokenController = new TokenController(tokenStore);
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
@@ -79,8 +70,6 @@ public class Main {
         var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
         var introspectionEndpoint =
                 URI.create("https://as.example.com:8443/oauth2/introspect");
-        SecureTokenStore tokenStore = new CookieTokenStore();
-        var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
         before(tokenController::validateToken);
@@ -166,13 +155,13 @@ public class Main {
             (e, request, response) -> response.status(404));
     }
 
-  private static void badRequest(Exception ex,
+    private static void badRequest(Exception ex,
       Request request, Response response) {
-    response.status(400);
-    response.body(new JSONObject().put("error", ex.getMessage()).toString());
-  }
+        response.status(400);
+        response.body(new JSONObject().put("error", ex.getMessage()).toString());
+    }
 
-    private static void createTables(Connection connection) throws Exception {
+    static void createTables(Connection connection) throws Exception {
         try (var conn = connection;
              var stmt = conn.createStatement();
              var in = Main.class.getResourceAsStream("/schema.sql")) {

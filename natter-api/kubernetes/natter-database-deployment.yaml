@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: natter-database-deployment
+  namespace: natter-api
+spec:
+  selector:
+    matchLabels:
+      app: natter-database
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: natter-database
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: natter-database
+          image: apisecurityinaction/h2database:latest
+          imagePullPolicy: Never
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - all
+          ports:
+            - containerPort: 9092

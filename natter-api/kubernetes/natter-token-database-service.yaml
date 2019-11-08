@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: natter-token-database-service
+  namespace: natter-api
+spec:
+  selector:
+    app: natter-token-database
+  ports:
+    - protocol: TCP
+      port: 9092

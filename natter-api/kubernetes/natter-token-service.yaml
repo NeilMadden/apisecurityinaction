@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: natter-token-service
+  namespace: natter-api
+spec:
+  selector:
+    app: token-service
+  ports:
+    - protocol: TCP
+      port: 4567
