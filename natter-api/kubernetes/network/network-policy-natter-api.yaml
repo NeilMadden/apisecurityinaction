@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: token-api-network-policy
+  namespace: natter-api
+spec:
+  podSelector:
+    matchLabels:
+      app: natter-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 4567
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: natter-database
+      ports:
+        - protocol: TCP
+          port: 9092
+    - to:
+        - podSelector:
+            matchLabels:
+              app: token-service
+      ports:
+        - protocol: TCP
+          port: 4567

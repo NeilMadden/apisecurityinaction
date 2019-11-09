@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: natter-database-network-policy
+  namespace: natter-api
+spec:
+  podSelector:
+    matchLabels:
+      app: natter-database
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: natter-api
+      ports:
+        - protocol: TCP
+          port: 9092
