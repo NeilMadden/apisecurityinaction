@@ -15,10 +15,25 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      volumes:
+        - name: root-ca-cert
+          secret:
+            secretName: root-ca-cert
+        - name: natter-token-database-cert
+          secret:
+            secretName: natter-token-database-service-cert
+            defaultMode: 256
       containers:
         - name: natter-token-database
           image: apisecurityinaction/h2database:latest
           imagePullPolicy: Never
+          volumeMounts:
+            - name: root-ca-cert
+              mountPath: "/etc/certs/root-ca"
+              readOnly: true
+            - name: natter-token-database-cert
+              mountPath: "/etc/certs/natter-token-database"
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
