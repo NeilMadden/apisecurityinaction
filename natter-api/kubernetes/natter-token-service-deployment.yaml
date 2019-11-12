@@ -15,6 +15,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        fsGroup: 1000
       volumes:
         - name: root-ca-cert
           secret:
@@ -22,7 +23,7 @@ spec:
         - name: natter-token-cert
           secret:
             secretName: natter-token-service-cert
-            defaultMode: 256
+            defaultMode: 288
       containers:
         - name: token-service
           image: apisecurityinaction/token-service:latest

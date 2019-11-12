@@ -25,11 +25,12 @@ public class Main {
         EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
                 new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
-//        secure("localhost.p12", "changeit", null, null);
+        secure("/etc/certs/natter-api/natter-api-service.p12",
+                "changeit", null, null);
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
-        var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
+        var jdbcUrl = "jdbc:h2:ssl://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
             jdbcUrl, "natter", "password");
         createTables(datasource.getConnection());
@@ -38,7 +39,7 @@ public class Main {
         var database = Database.forDataSource(datasource);
 
         SecureTokenStore tokenStore = new RemoteTokenStore(
-                "http://natter-token-service:4567/tokens");
+                "https://natter-token-service:4567/tokens");
         var capController = new CapabilityController(tokenStore);
         var tokenController = new TokenController(tokenStore);
         var spaceController = new SpaceController(database, capController);

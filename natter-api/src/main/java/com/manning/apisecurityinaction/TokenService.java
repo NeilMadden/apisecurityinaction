@@ -14,9 +14,10 @@ public class TokenService {
             LoggerFactory.getLogger(TokenService.class);
 
     public static void main(String... args) throws Exception {
-
+        secure("/etc/certs/natter-token-service/natter-token-service.p12",
+            "changeit", null, null);
         var jdbcUrl =
-            "jdbc:h2:tcp://natter-token-database-service:9092/mem:tokens";
+            "jdbc:h2:ssl://natter-token-database-service:9092/mem:tokens";
         var datasource = JdbcConnectionPool.create(
                 jdbcUrl, "natter", "password");
         Main.createTables(datasource.getConnection());

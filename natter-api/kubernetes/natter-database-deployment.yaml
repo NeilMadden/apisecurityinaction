@@ -15,6 +15,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        fsGroup: 1000
       volumes:
         - name: root-ca-cert
           secret:
@@ -22,10 +23,10 @@ spec:
         - name: natter-database-cert
           secret:
             secretName: natter-database-service-cert
-            defaultMode: 256
+            defaultMode: 288
       containers:
         - name: natter-database
-          image: apisecurityinaction/h2database:latest
+          image: apisecurityinaction/h2database:tls
           imagePullPolicy: Never
           volumeMounts:
             - name: root-ca-cert

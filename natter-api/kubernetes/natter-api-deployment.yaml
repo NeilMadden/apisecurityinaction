@@ -15,6 +15,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        fsGroup: 1000
       volumes:
         - name: root-ca-cert
           secret:
