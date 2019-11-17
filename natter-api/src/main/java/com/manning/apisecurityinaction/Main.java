@@ -1,6 +1,7 @@
 package com.manning.apisecurityinaction;
 
-import java.net.URI;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
 
@@ -25,12 +26,10 @@ public class Main {
         EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
                 new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
-        secure("/etc/certs/natter-api/natter-api-service.p12",
-                "changeit", null, null);
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
-        var jdbcUrl = "jdbc:h2:ssl://natter-database-service:9092/mem:natter";
+        var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
             jdbcUrl, "natter", "password");
         createTables(datasource.getConnection());
@@ -38,10 +37,15 @@ public class Main {
             jdbcUrl, "natter_api_user", "password");
         var database = Database.forDataSource(datasource);
 
-        SecureTokenStore tokenStore = new RemoteTokenStore(
-                "https://natter-token-service:4567/tokens");
+        var keystore = KeyStore.getInstance("PKCS12");
+        keystore.load(new FileInputStream("keystore.p12"),
+                "changeit".toCharArray());
+        var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
+
+        SecureTokenStore tokenStore = new MacaroonTokenStore(
+                new JsonTokenStore(), macKey);
         var capController = new CapabilityController(tokenStore);
-        var tokenController = new TokenController(tokenStore);
+        var tokenController = new TokenController(new CookieTokenStore());
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
@@ -62,16 +66,6 @@ public class Main {
             }
         }));
 
-
-        var header = new JSONObject()
-                .put("alg", "HS256")
-                .put("typ", "JWT");
-
-        var clientId = "testClient";
-        var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
-        var introspectionEndpoint =
-                URI.create("https://as.example.com:8443/oauth2/introspect");
-
         before(userController::authenticate);
         before(tokenController::validateToken);
 
@@ -91,6 +85,7 @@ public class Main {
         post("/users", userController::registerUser);
 
         before("/spaces", userController::requireAuthentication);
+        before("/spaces", userController::lookupPermissions);
         before("/spaces",
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);

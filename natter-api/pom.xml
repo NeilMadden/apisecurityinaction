@@ -77,6 +77,12 @@
       <artifactId>drools-compiler</artifactId>
       <version>${drools.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.12.1</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -96,11 +102,6 @@
             <mainClass>${exec.mainClass}</mainClass>
             <jvmFlags>
               <jvmFlag>-Djava.security.egd=file:/dev/urandom</jvmFlag>
-              <jvmFlag>-Djavax.net.ssl.trustStore=/etc/certs/root-ca/root-ca.p12</jvmFlag>
-              <jvmFlag>-Djavax.net.ssl.trustStorePassword=changeit</jvmFlag>
-              <jvmFlag>-Djavax.net.ssl.keyStore=${keystore.path}</jvmFlag>
-              <jvmFlag>-Djavax.net.ssl.keyStorePassword=changeit</jvmFlag>
-              <jvmFlag>-Dh2.enableAnonymousTLS=false</jvmFlag>
             </jvmFlags>
             <ports>
               <port>4567</port>

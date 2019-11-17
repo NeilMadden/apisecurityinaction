@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: natter-token-database-service
+  name: natter-link-preview-service
   namespace: natter-api
 spec:
   selector:
-    app: natter-token-database
+    app: link-preview-service
   ports:
     - protocol: TCP
-      port: 9092
+      port: 4567

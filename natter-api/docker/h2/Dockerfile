@@ -14,14 +14,9 @@ FROM gcr.io/distroless/java:11
 WORKDIR /opt
 COPY --from=build-env /tmp/h2/bin /opt/h2
 
-ARG KEYSTORE
-ENV JAVA_TOOL_OPTIONS -Djavax.net.ssl.keyStore=${KEYSTORE} \
-    -Djavax.net.ssl.keyStorePassword=changeit \
-    -Dh2.enableAnonymousTLS=false
-
 USER 1000:1000
 
 EXPOSE 9092
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/urandom", \
         "-cp", "/opt/h2/h2-1.4.197.jar", \
-        "org.h2.tools.Server", "-tcp", "-tcpAllowOthers", "-tcpSSL"]
+        "org.h2.tools.Server", "-tcp", "-tcpAllowOthers"]

@@ -15,26 +15,10 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        fsGroup: 1000
-      volumes:
-        - name: root-ca-cert
-          secret:
-            secretName: root-ca-cert
-        - name: natter-api-cert
-          secret:
-            secretName: natter-api-service-cert
-            defaultMode: 256
       containers:
         - name: natter-api
           image: apisecurityinaction/natter-api:latest
           imagePullPolicy: Never
-          volumeMounts:
-            - name: root-ca-cert
-              mountPath: "/etc/certs/root-ca"
-              readOnly: true
-            - name: natter-api-cert
-              mountPath: "/etc/certs/natter-api"
-              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

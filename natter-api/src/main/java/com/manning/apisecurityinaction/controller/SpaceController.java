@@ -1,8 +1,13 @@
 package com.manning.apisecurityinaction.controller;
 
+import java.net.*;
+import java.net.http.*;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.dalesbred.Database;
@@ -114,8 +119,40 @@ public class SpaceController {
             "FROM messages WHERE msg_id = ? AND space_id = ?",
         msgId, spaceId);
 
+    var linkPattern = Pattern.compile("https?://\\S+");
+    var matcher = linkPattern.matcher(message.message);
+    int start = 0;
+    while (matcher.find(start)) {
+        var url = matcher.group();
+        var preview = fetchLinkPreview(url);
+        if (preview != null) {
+            message.links.add(preview);
+        }
+        start = matcher.end();
+    }
+
     response.status(200);
     return message;
+  }
+
+  private final HttpClient httpClient = HttpClient.newHttpClient();
+  private final URI linkPreviewService = URI.create(
+          "http://natter-link-preview-service:4567");
+
+  private JSONObject fetchLinkPreview(String link) {
+      var url = linkPreviewService.resolve("/preview?url=" +
+              URLEncoder.encode(link, StandardCharsets.UTF_8));
+      var request = HttpRequest.newBuilder(url)
+              .GET()
+              .build();
+      try {
+          var response = httpClient.send(request,
+                  BodyHandlers.ofString());
+          if (response.statusCode() == 200) {
+            return new JSONObject(response.body());
+          }
+      } catch (Exception ignored) { }
+      return null;
   }
 
   public JSONArray findMessages(Request request, Response response) {
@@ -170,6 +207,7 @@ public class SpaceController {
     private final String author;
     private final Instant time;
     private final String message;
+    private final List<JSONObject> links = new ArrayList<>();
 
     public Message(long spaceId, long msgId, String author,
         Instant time, String message) {
@@ -187,6 +225,7 @@ public class SpaceController {
       msg.put("author", author);
       msg.put("time", time.toString());
       msg.put("message", message);
+      msg.put("links", links);
       return msg.toString();
     }
   }
