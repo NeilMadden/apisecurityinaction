@@ -42,10 +42,10 @@ public class Main {
                 "changeit".toCharArray());
         var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
 
-        SecureTokenStore tokenStore = new MacaroonTokenStore(
-                new JsonTokenStore(), macKey);
+        SecureTokenStore tokenStore = new HmacTokenStore(
+                new DatabaseTokenStore(database), macKey);
         var capController = new CapabilityController(tokenStore);
-        var tokenController = new TokenController(new CookieTokenStore());
+        var tokenController = new TokenController(tokenStore);
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
@@ -56,6 +56,16 @@ public class Main {
             }
         });
         before(new CorsFilter(Set.of("https://localhost:9999")));
+
+        var expectedHostNames = Set.of(
+                "natter-api-service:4567",
+                "natter-api-service.natter-api:4567"
+        );
+        before((request, response) -> {
+            if (!expectedHostNames.contains(request.host())) {
+                halt(400);
+            }
+        });
 
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
@@ -85,7 +95,6 @@ public class Main {
         post("/users", userController::registerUser);
 
         before("/spaces", userController::requireAuthentication);
-        before("/spaces", userController::lookupPermissions);
         before("/spaces",
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);

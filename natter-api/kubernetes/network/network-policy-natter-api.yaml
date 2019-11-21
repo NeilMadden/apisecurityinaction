@@ -25,7 +25,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app: token-service
+              app: link-preview-service
       ports:
         - protocol: TCP
           port: 4567
