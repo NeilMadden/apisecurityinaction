@@ -4,3 +4,5 @@ metadata:
   name: natter-api
   labels:
     name: natter-api
+  annotations:
+    linkerd.io/inject: enabled
