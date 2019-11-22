@@ -59,7 +59,9 @@ public class Main {
 
         var expectedHostNames = Set.of(
                 "natter-api-service:4567",
-                "natter-api-service.natter-api:4567"
+                "natter-api-service.natter-api:4567",
+                "natter-api-service.natter-api.svc.cluster.local:4567",
+                "192.168.99.116:30567"
         );
         before((request, response) -> {
             if (!expectedHostNames.contains(request.host())) {
