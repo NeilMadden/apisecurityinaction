@@ -58,10 +58,11 @@ public class Main {
         before(new CorsFilter(Set.of("https://localhost:9999")));
 
         var expectedHostNames = Set.of(
+                "api.natter.local",
+                "api.natter.local:30567",
                 "natter-api-service:4567",
                 "natter-api-service.natter-api:4567",
-                "natter-api-service.natter-api.svc.cluster.local:4567",
-                "192.168.99.116:30567"
+                "natter-api-service.natter-api.svc.cluster.local:4567"
         );
         before((request, response) -> {
             if (!expectedHostNames.contains(request.host())) {

@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: natter-api
+  annotations:
+    nginx.ingress.kubernetes.io/upstream-vhost:
+      "$service_name.$namespace.svc.cluster.local:$service_port"
+spec:
+  tls:
+    - hosts:
+        - api.natter.local
+      secretName: natter-tls
+  rules:
+    - host: api.natter.local
+      http:
+        paths:
+          - backend:
+              serviceName: natter-api-service
+              servicePort: 4567
