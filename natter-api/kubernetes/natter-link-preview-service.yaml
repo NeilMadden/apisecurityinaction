@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: natter-link-preview-service
+  namespace: natter-api
+spec:
+  selector:
+    app: link-preview-service
+  ports:
+    - protocol: TCP
+      port: 4567

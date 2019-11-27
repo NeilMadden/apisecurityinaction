@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: natter-api-deployment
+  namespace: natter-api
+spec:
+  selector:
+    matchLabels:
+      app: natter-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: natter-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: natter-api
+          image: apisecurityinaction/natter-api:latest
+          imagePullPolicy: Never
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - all
+          ports:
+            - containerPort: 4567

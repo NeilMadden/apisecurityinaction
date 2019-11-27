@@ -1,11 +1,9 @@
 package com.manning.apisecurityinaction;
 
 import java.io.FileInputStream;
-import java.net.URI;
-import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
-import java.util.*;
+import java.util.Set;
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
@@ -18,6 +16,7 @@ import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
 
@@ -27,18 +26,27 @@ public class Main {
         EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
                 new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
-        secure("localhost.p12", "changeit", null, null);
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
+        var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
-            "jdbc:h2:mem:natter", "natter", "password");
+            jdbcUrl, "natter", "password");
         createTables(datasource.getConnection());
         datasource = JdbcConnectionPool.create(
-            "jdbc:h2:mem:natter", "natter_api_user", "password");
-
+            jdbcUrl, "natter_api_user", "password");
         var database = Database.forDataSource(datasource);
-        var spaceController = new SpaceController(database);
+
+        var keystore = KeyStore.getInstance("PKCS12");
+        keystore.load(new FileInputStream("keystore.p12"),
+                "changeit".toCharArray());
+        var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
+
+        SecureTokenStore tokenStore = new HmacTokenStore(
+                new DatabaseTokenStore(database), macKey);
+        var capController = new CapabilityController(tokenStore);
+        var tokenController = new TokenController(tokenStore);
+        var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
@@ -49,46 +57,27 @@ public class Main {
         });
         before(new CorsFilter(Set.of("https://localhost:9999")));
 
+        var expectedHostNames = Set.of(
+                "api.natter.local",
+                "api.natter.local:30567",
+                "natter-api-service:4567",
+                "natter-api-service.natter-api:4567",
+                "natter-api-service.natter-api.svc.cluster.local:4567"
+        );
+        before((request, response) -> {
+            if (!expectedHostNames.contains(request.host())) {
+                halt(400);
+            }
+        });
+
         before(((request, response) -> {
             if (request.requestMethod().equals("POST") &&
-            !request.pathInfo().equals("/oauth2/access_token") &&
             !"application/json".equals(request.contentType())) {
                 halt(415, new JSONObject().put(
                     "error", "Only application/json supported"
                 ).toString());
             }
         }));
-
-        var keyPassword = System.getProperty("keystore.password",
-                "changeit").toCharArray();
-        var keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream("keystore.p12"),
-                keyPassword);
-        var macKey = keyStore.getKey("hmac-key", keyPassword);
-        var encKey = keyStore.getKey("aes-key", keyPassword);
-
-        var header = new JSONObject()
-                .put("alg", "HS256")
-                .put("typ", "JWT");
-
-        var clientId = "testClient";
-        var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
-        var introspectionEndpoint =
-                URI.create("https://as.example.com:8443/oauth2/introspect");
-        SecureTokenStore tokenStore = new DatabaseTokenStore(database);
-        var tokenController = new TokenController(tokenStore);
-
-        var accessTokenStore = new DatabaseTokenStore(database);
-        var secretHash = Base64.getEncoder().encodeToString(
-                AuthorizationServerController.hash("password"));
-        var client = new JSONObject()
-                .put("secret_hash", secretHash)
-                .put("allowed_scope", List.of("create_space", "post_message"));
-        var clients = new JSONObject()
-                .put("test", client);
-
-        var oauthController = new AuthorizationServerController(
-                accessTokenStore, database, clients);
 
         before(userController::authenticate);
         before(tokenController::validateToken);
@@ -101,12 +90,8 @@ public class Main {
         before("/*", droolsController::enforcePolicy);
 
         before("/sessions", userController::requireAuthentication);
-        before("/sessions",
-                tokenController.requireScope("POST", "create_token"));
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
-
-        post("/oauth2/access_token", oauthController::issueAccessToken);
 
         get("/logs", auditController::readAuditLog);
 
@@ -116,6 +101,10 @@ public class Main {
         before("/spaces",
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);
+
+        before("/spaces/:spaceId/messages", capController::lookupPermissions);
+        before("/spaces/:spaceId/messages/*", capController::lookupPermissions);
+        before("/spaces/:spaceId/members", capController::lookupPermissions);
 
         before("/spaces/*/messages",
                 tokenController.requireScope("POST", "post_message"));
@@ -174,19 +163,18 @@ public class Main {
             (e, request, response) -> response.status(404));
     }
 
-  private static void badRequest(Exception ex,
+    private static void badRequest(Exception ex,
       Request request, Response response) {
-    response.status(400);
-    response.body(new JSONObject().put("error", ex.getMessage()).toString());
-  }
+        response.status(400);
+        response.body(new JSONObject().put("error", ex.getMessage()).toString());
+    }
 
-    private static void createTables(Connection connection) throws Exception {
+    static void createTables(Connection connection) throws Exception {
         try (var conn = connection;
-             var stmt = conn.createStatement()) {
+             var stmt = conn.createStatement();
+             var in = Main.class.getResourceAsStream("/schema.sql")) {
             conn.setAutoCommit(false);
-            Path path = Paths.get(
-                    Main.class.getResource("/schema.sql").toURI());
-            stmt.execute(Files.readString(path));
+            stmt.execute(new String(in.readAllBytes(), UTF_8));
             conn.commit();
         }
     }

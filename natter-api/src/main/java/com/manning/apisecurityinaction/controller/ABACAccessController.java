@@ -23,7 +23,7 @@ public abstract class ABACAccessController {
         actionAttrs.put("method", request.requestMethod());
 
         var envAttrs = new HashMap<String, Object>();
-        envAttrs.put("timeOfDay", LocalTime.now().withHour(23));
+        envAttrs.put("timeOfDay", LocalTime.now());
         envAttrs.put("ip", request.ip());
 
         var permitted = checkPermitted(subjectAttrs, resourceAttrs,

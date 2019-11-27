@@ -1,8 +1,13 @@
 package com.manning.apisecurityinaction.controller;
 
+import java.net.*;
+import java.net.http.*;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.dalesbred.Database;
@@ -14,9 +19,12 @@ public class SpaceController {
           Set.of("owner", "moderator", "member", "observer");
 
   private final Database database;
+  private final CapabilityController capabilityController;
 
-  public SpaceController(Database database) {
+  public SpaceController(Database database,
+                         CapabilityController capabilityController) {
     this.database = database;
+    this.capabilityController = capabilityController;
   }
 
   public JSONObject createSpace(Request request, Response response) {
@@ -43,19 +51,24 @@ public class SpaceController {
           "INSERT INTO spaces(space_id, name, owner) " +
               "VALUES(?, ?, ?);", spaceId, spaceName, owner);
 
-      // Grant all roles to the owner
-      for (var role : DEFINED_ROLES) {
-        database.updateUnique(
-                "INSERT INTO user_roles(space_id, user_id, role_id) " +
-                        "VALUES(?, ?, ?)", spaceId, owner, role);
-      }
+      var uri = capabilityController.createUri(request,
+              "/spaces/" + spaceId, "rwd");
+      var messagesUri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages", "rwd");
+      var messagesReadWriteUri = capabilityController.createUri(
+              request, "/spaces/" + spaceId + "/messages", "rw");
+      var messagesReadOnlyUri = capabilityController.createUri(
+              request, "/spaces/" + spaceId + "/messages", "r");
 
       response.status(201);
-      response.header("Location", "/spaces/" + spaceId);
+      response.header("Location", uri.toASCIIString());
 
       return new JSONObject()
-          .put("name", spaceName) .put("uri", "/spaces/" + spaceId);
-
+              .put("name", spaceName)
+              .put("uri", uri)
+              .put("messages-rwd", messagesUri)
+              .put("messages-rw", messagesReadWriteUri)
+              .put("messages-r", messagesReadOnlyUri);
     });
   }
 
@@ -85,9 +98,15 @@ public class SpaceController {
           spaceId, msgId, user, message);
 
       response.status(201);
-      var uri = "/spaces/" + spaceId + "/messages/" + msgId;
-      response.header("Location", uri);
-      return new JSONObject().put("uri", uri);
+      var uri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages/" + msgId, "rd");
+      var readOnlyUri = capabilityController.createUri(request,
+              "/spaces/" + spaceId + "/messages/" + msgId, "r");
+
+      response.header("Location", uri.toASCIIString());
+      return new JSONObject()
+              .put("uri", uri)
+              .put("read-only", readOnlyUri);
     });
   }
 
@@ -96,12 +115,44 @@ public class SpaceController {
     var msgId = Long.parseLong(request.params(":msgId"));
 
     var message = database.findUnique(Message.class,
-        "SELECT space_id, msg_id, author, msg_time, msg_text " +
+        "SELECT author, msg_time, msg_text " +
             "FROM messages WHERE msg_id = ? AND space_id = ?",
         msgId, spaceId);
 
+    var linkPattern = Pattern.compile("https?://\\S+");
+    var matcher = linkPattern.matcher(message.message);
+    int start = 0;
+    while (matcher.find(start)) {
+        var url = matcher.group();
+        var preview = fetchLinkPreview(url);
+        if (preview != null) {
+            message.links.add(preview);
+        }
+        start = matcher.end();
+    }
+
     response.status(200);
     return message;
+  }
+
+  private final HttpClient httpClient = HttpClient.newHttpClient();
+  private final URI linkPreviewService = URI.create(
+          "http://natter-link-preview-service:4567");
+
+  private JSONObject fetchLinkPreview(String link) {
+      var url = linkPreviewService.resolve("/preview?url=" +
+              URLEncoder.encode(link, StandardCharsets.UTF_8));
+      var request = HttpRequest.newBuilder(url)
+              .GET()
+              .build();
+      try {
+          var response = httpClient.send(request,
+                  BodyHandlers.ofString());
+          if (response.statusCode() == 200) {
+            return new JSONObject(response.body());
+          }
+      } catch (Exception ignored) { }
+      return null;
   }
 
   public JSONArray findMessages(Request request, Response response) {
@@ -116,9 +167,12 @@ public class SpaceController {
             "WHERE space_id = ? AND msg_time >= ?;",
         spaceId, since);
 
+    var perms = request.<String>attribute("perms")
+            .replace("w", "");
     response.status(200);
     return new JSONArray(messages.stream()
         .map(msgId -> "/spaces/" + spaceId + "/messages/" + msgId)
+        .map(path -> capabilityController.createUri(request, path, perms))
         .collect(Collectors.toList()));
   }
 
@@ -148,16 +202,12 @@ public class SpaceController {
   }
 
   public static class Message {
-    private final long spaceId;
-    private final long msgId;
     private final String author;
     private final Instant time;
     private final String message;
+    private final List<JSONObject> links = new ArrayList<>();
 
-    public Message(long spaceId, long msgId, String author,
-        Instant time, String message) {
-      this.spaceId = spaceId;
-      this.msgId = msgId;
+    public Message(String author, Instant time, String message) {
       this.author = author;
       this.time = time;
       this.message = message;
@@ -165,11 +215,10 @@ public class SpaceController {
     @Override
     public String toString() {
       JSONObject msg = new JSONObject();
-      msg.put("uri",
-          "/spaces/" + spaceId + "/messages/" + msgId);
       msg.put("author", author);
       msg.put("time", time.toString());
       msg.put("message", message);
+      msg.put("links", links);
       return msg.toString();
     }
   }

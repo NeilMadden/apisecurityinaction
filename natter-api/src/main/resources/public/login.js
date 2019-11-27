@@ -14,7 +14,7 @@ function login(username, password) {
        if (res.ok) {
          res.json().then(json => {
             localStorage.setItem('token', json.token);
-            window.location.replace('/natter.html');
+            window.location.replace('/capability.html');
          });
        }
     })

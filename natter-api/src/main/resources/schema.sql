@@ -48,13 +48,13 @@ INSERT INTO role_permissions(role_id, perms)
 CREATE TABLE user_roles(
     space_id INT NOT NULL REFERENCES spaces(space_id),
     user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
-    role_id VARCHAR(30) NOT NULL REFERENCES role_permissions(role_id),
+    role_id VARCHAR(30) NOT NULL REFERENCES role_permissions(role_id)
 );
 CREATE INDEX user_roles_idx ON user_roles(space_id, user_id);
 
 CREATE TABLE tokens(
     token_id VARCHAR(30) PRIMARY KEY,
-    user_id VARCHAR(30) NOT NULL REFERENCES users(user_id),
+    user_id VARCHAR(30),
     expiry TIMESTAMP NOT NULL,
     attributes VARCHAR(4096) NOT NULL
 );
