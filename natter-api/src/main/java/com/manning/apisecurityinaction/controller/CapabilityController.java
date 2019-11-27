@@ -25,7 +25,8 @@ public class CapabilityController {
 
         var base = URI.create(request.url());
         try {
-            return new URI(base.getScheme(), tokenId, base.getHost(),
+            return new URI(base.getScheme(), ":" + tokenId,
+                    base.getHost(),
                     base.getPort(), path, null, null);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);

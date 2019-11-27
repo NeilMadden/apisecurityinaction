@@ -1,7 +1,8 @@
 function getCap(url, callback) {
     let capUrl = new URL(url);
-    let token = capUrl.username;
+    let token = capUrl.password;
     capUrl.username = '';
+    capUrl.password = '';
 
     return fetch(capUrl.href, {
         headers: {
