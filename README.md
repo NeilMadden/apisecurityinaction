@@ -79,3 +79,8 @@ descriptions for HTTP requests that can be
 
  - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter09)
  - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter09-end)
+
+### Chapter 10 - Microservice APIs in Kubernetes
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter10)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter10-end)
