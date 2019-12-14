@@ -14,6 +14,8 @@ public class DatabaseTokenStore implements TokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 
+    private final Base64.Encoder encoder =
+            Base64.getUrlEncoder().withoutPadding();
     private final Database database;
     private final SecureRandom secureRandom;
 
@@ -29,8 +31,7 @@ public class DatabaseTokenStore implements TokenStore {
     private String randomId() {
         var bytes = new byte[20];
         secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(bytes);
+        return encoder.encodeToString(bytes);
     }
 
     @Override
