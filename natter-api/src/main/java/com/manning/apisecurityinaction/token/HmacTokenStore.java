@@ -1,10 +1,10 @@
 package com.manning.apisecurityinaction.token;
 
-import spark.Request;
-
 import javax.crypto.Mac;
 import java.security.*;
-import java.util.*;
+import java.util.Optional;
+
+import spark.Request;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -23,9 +23,7 @@ public class HmacTokenStore implements SecureTokenStore {
         var tokenId = delegate.create(request, token);
         var tag = hmac(tokenId);
 
-        return tokenId + '.' +
-                Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(tag);
+        return tokenId + '.' + Base64url.encode(tag);
     }
 
     private byte[] hmac(String tokenId) {
@@ -46,8 +44,7 @@ public class HmacTokenStore implements SecureTokenStore {
         var realTokenId = tokenId.substring(0, index);
         var tag = tokenId.substring(index + 1);
 
-        var decoder = Base64.getUrlDecoder();
-        var provided = decoder.decode(tag);
+        var provided = Base64url.decode(tag);
         var computed = hmac(realTokenId);
 
         if (!MessageDigest.isEqual(provided, computed)) {
@@ -63,8 +60,7 @@ public class HmacTokenStore implements SecureTokenStore {
         if (index == -1) return;
         var realTokenId = tokenId.substring(0, index);
 
-        var provided = Base64.getUrlDecoder()
-                .decode(tokenId.substring(index + 1));
+        var provided = Base64url.decode(tokenId.substring(index + 1));
         var computed = hmac(realTokenId);
 
         if (!MessageDigest.isEqual(provided, computed)) {
