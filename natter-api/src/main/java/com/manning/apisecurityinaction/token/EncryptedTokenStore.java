@@ -1,11 +1,11 @@
 package com.manning.apisecurityinaction.token;
 
-import spark.Request;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.*;
-import java.util.*;
+import java.util.Optional;
+
+import spark.Request;
 
 import static javax.crypto.Cipher.*;
 
@@ -14,14 +14,9 @@ public class EncryptedTokenStore implements SecureTokenStore {
     private final TokenStore delegate;
     private final Key encryptionKey;
 
-    private final Base64.Encoder encoder;
-    private final Base64.Decoder decoder;
-
     public EncryptedTokenStore(TokenStore delegate, Key encryptionKey) {
         this.delegate = delegate;
         this.encryptionKey = encryptionKey;
-        this.encoder = Base64.getUrlEncoder().withoutPadding();
-        this.decoder = Base64.getUrlDecoder();
     }
 
     @Override
@@ -29,10 +24,10 @@ public class EncryptedTokenStore implements SecureTokenStore {
         var tokenId = delegate.create(request, token);
 
         var nonceAndCiphertext = encrypt(encryptionKey,
-                decoder.decode(tokenId));
+                Base64url.decode(tokenId));
 
-        return encoder.encodeToString(nonceAndCiphertext[0]) + '.'
-                + encoder.encodeToString(nonceAndCiphertext[1]);
+        return Base64url.encode(nonceAndCiphertext[0]) + '.'
+                + Base64url.encode(nonceAndCiphertext[1]);
     }
 
     @Override
@@ -40,11 +35,11 @@ public class EncryptedTokenStore implements SecureTokenStore {
         var index = tokenId.indexOf('.');
         if (index == -1) { return Optional.empty(); }
 
-        var nonce = decoder.decode(tokenId.substring(0, index));
-        var encrypted = decoder.decode(tokenId.substring(index + 1));
+        var nonce = Base64url.decode(tokenId.substring(0, index));
+        var encrypted = Base64url.decode(tokenId.substring(index + 1));
         var decrypted = decrypt(encryptionKey, nonce, encrypted);
 
-        return delegate.read(request, encoder.encodeToString(decrypted));
+        return delegate.read(request, Base64url.encode(decrypted));
     }
 
     @Override
@@ -52,11 +47,11 @@ public class EncryptedTokenStore implements SecureTokenStore {
         var index = tokenId.indexOf('.');
         if (index == -1) { return; }
 
-        var nonce = decoder.decode(tokenId.substring(0, index));
-        var encrypted = decoder.decode(tokenId.substring(index + 1));
+        var nonce = Base64url.decode(tokenId.substring(0, index));
+        var encrypted = Base64url.decode(tokenId.substring(index + 1));
         var decrypted = decrypt(encryptionKey, nonce, encrypted);
 
-        delegate.revoke(request, encoder.encodeToString(decrypted));
+        delegate.revoke(request, Base64url.encode(decrypted));
     }
 
     static byte[][] encrypt(Key key, byte[] message) {
