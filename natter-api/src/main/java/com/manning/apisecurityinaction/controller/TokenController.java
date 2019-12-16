@@ -4,8 +4,9 @@ import com.manning.apisecurityinaction.token.*;
 import org.json.JSONObject;
 import spark.*;
 
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
+import static java.time.Instant.now;
 
 import static spark.Spark.halt;
 
@@ -19,7 +20,7 @@ public class TokenController {
 
     public JSONObject login(Request request, Response response) {
         String subject = request.attribute("subject");
-        var expiry = Instant.now().plus(10, ChronoUnit.MINUTES);
+        var expiry = now().plus(10, ChronoUnit.MINUTES);
 
         var token = new TokenStore.Token(expiry, subject);
         var tokenId = tokenStore.create(request, token);
@@ -37,7 +38,7 @@ public class TokenController {
         tokenId = tokenId.substring(7);
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
-            if (Instant.now().isBefore(token.expiry)) {
+            if (now().isBefore(token.expiry)) {
                 request.attribute("subject", token.username);
                 token.attributes.forEach(request::attribute);
             } else {
