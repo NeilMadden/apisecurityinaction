@@ -21,8 +21,7 @@ public class CookieTokenStore implements TokenStore {
         session.attribute("expiry", token.expiry);
         session.attribute("attrs", token.attributes);
 
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(sha256(session.id()));
+        return Base64url.encode(sha256(session.id()));
     }
 
     @Override
@@ -33,7 +32,7 @@ public class CookieTokenStore implements TokenStore {
             return Optional.empty();
         }
 
-        var provided = Base64.getUrlDecoder().decode(tokenId);
+        var provided = Base64url.decode(tokenId);
         var computed = sha256(session.id());
 
         if (!MessageDigest.isEqual(computed, provided)) {
@@ -52,7 +51,7 @@ public class CookieTokenStore implements TokenStore {
         var session = request.session(false);
         if (session == null) return;
 
-        var provided = Base64.getUrlDecoder().decode(tokenId);
+        var provided = Base64url.decode(tokenId);
         var computed = sha256(session.id());
 
         if (!MessageDigest.isEqual(computed, provided)) {
