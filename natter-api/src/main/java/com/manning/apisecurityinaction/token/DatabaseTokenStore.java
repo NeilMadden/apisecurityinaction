@@ -2,7 +2,7 @@ package com.manning.apisecurityinaction.token;
 
 import java.security.SecureRandom;
 import java.sql.*;
-import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import org.dalesbred.Database;
@@ -16,8 +16,6 @@ public class DatabaseTokenStore implements TokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 
-    private final Base64.Encoder encoder =
-            Base64.getUrlEncoder().withoutPadding();
     private final Database database;
     private final SecureRandom secureRandom;
 
@@ -33,7 +31,7 @@ public class DatabaseTokenStore implements TokenStore {
     private String randomId() {
         var bytes = new byte[20];
         secureRandom.nextBytes(bytes);
-        return encoder.encodeToString(bytes);
+        return Base64url.encode(bytes);
     }
 
     @Override
@@ -64,7 +62,7 @@ public class DatabaseTokenStore implements TokenStore {
 
     private String hash(String tokenId) {
         var hash = sha256(tokenId);
-        return encoder.encodeToString(hash);
+        return Base64url.encode(hash);
     }
 
     private Token readToken(ResultSet resultSet)
