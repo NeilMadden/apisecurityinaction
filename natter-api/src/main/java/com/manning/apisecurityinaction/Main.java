@@ -3,8 +3,11 @@ package com.manning.apisecurityinaction;
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.crypto.*;
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
+import software.pando.crypto.nacl.SecretBox;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
 import spark.*;
@@ -12,6 +15,7 @@ import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.nio.file.*;
 import java.security.KeyStore;
@@ -66,14 +70,11 @@ public class Main {
         var macKey = keyStore.getKey("hmac-key", keyPassword);
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
-        var header = new JSONObject()
-                .put("alg", "HS256")
-                .put("typ", "JWT");
-
         var tokenWhitelist = new DatabaseTokenStore(database);
-        SecureTokenStore tokenStore =
-                new JwtTokenStore((SecretKey) encKey, tokenWhitelist);
 
+        var naclKey = SecretBox.key(encKey.getEncoded());
+        var tokenStore = new EncryptedTokenStore(
+                new JsonTokenStore(), naclKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
