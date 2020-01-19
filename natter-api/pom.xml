@@ -52,7 +52,12 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>7.2.1</version>
+      <version>8.3</version>
+    </dependency>
+    <dependency>
+      <groupId>software.pando.crypto</groupId>
+      <artifactId>salty-coffee</artifactId>
+      <version>1.0.2</version>
     </dependency>
 
     <!-- Drools rule engine dependencies -->
