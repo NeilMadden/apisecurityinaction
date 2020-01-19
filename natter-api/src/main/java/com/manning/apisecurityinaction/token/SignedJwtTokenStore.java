@@ -5,13 +5,9 @@ import java.util.*;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jwt.*;
-import org.slf4j.*;
 import spark.Request;
 
-public class SignedJwtTokenStore implements SecureTokenStore {
-    private static final Logger logger =
-            LoggerFactory.getLogger(SignedJwtTokenStore.class);
-
+public class SignedJwtTokenStore implements AuthenticatedTokenStore {
     private final JWSSigner signer;
     private final JWSVerifier verifier;
     private final JWSAlgorithm algorithm;
@@ -66,7 +62,6 @@ public class SignedJwtTokenStore implements SecureTokenStore {
 
             return Optional.of(token);
         } catch (ParseException | JOSEException e) {
-            logger.debug("Unable to validate JWT", e);
             return Optional.empty();
         }
     }

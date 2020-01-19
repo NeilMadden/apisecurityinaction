@@ -1,26 +1,22 @@
 package com.manning.apisecurityinaction;
 
-import com.google.common.util.concurrent.RateLimiter;
-import com.manning.apisecurityinaction.controller.*;
-import com.manning.apisecurityinaction.token.*;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.crypto.*;
-import org.dalesbred.Database;
-import org.dalesbred.result.EmptyResultException;
-import software.pando.crypto.nacl.SecretBox;
-import org.h2.jdbcx.JdbcConnectionPool;
-import org.json.*;
-import spark.*;
-import spark.embeddedserver.EmbeddedServers;
-import spark.embeddedserver.jetty.EmbeddedJettyFactory;
-
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
+
+import com.google.common.util.concurrent.RateLimiter;
+import com.manning.apisecurityinaction.controller.*;
+import com.manning.apisecurityinaction.token.*;
+import org.dalesbred.Database;
+import org.dalesbred.result.EmptyResultException;
+import org.h2.jdbcx.JdbcConnectionPool;
+import org.json.*;
+import spark.*;
+import spark.embeddedserver.EmbeddedServers;
+import spark.embeddedserver.jetty.EmbeddedJettyFactory;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -71,11 +67,9 @@ public class Main {
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
         var tokenWhitelist = new DatabaseTokenStore(database);
-
-        var naclKey = SecretBox.key(encKey.getEncoded());
-        var tokenStore = new EncryptedTokenStore(
-                new JsonTokenStore(), naclKey);
-        var tokenController = new TokenController(tokenStore);
+        var tokenController = new TokenController(
+                new EncryptedJwtTokenStore(
+                        (SecretKey) encKey, tokenWhitelist));
 
         before(userController::authenticate);
         before(tokenController::validateToken);

@@ -12,7 +12,7 @@ import spark.Request;
 
 import static com.manning.apisecurityinaction.token.CookieTokenStore.sha256;
 
-public class DatabaseTokenStore implements SecureTokenStore {
+public class DatabaseTokenStore implements ConfidentialTokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 

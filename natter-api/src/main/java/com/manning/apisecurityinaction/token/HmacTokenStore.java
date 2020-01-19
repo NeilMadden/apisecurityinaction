@@ -13,9 +13,17 @@ public class HmacTokenStore implements SecureTokenStore {
     private final TokenStore delegate;
     private final Key macKey;
 
-    public HmacTokenStore(TokenStore delegate, Key macKey) {
+    private HmacTokenStore(TokenStore delegate, Key macKey) {
         this.delegate = delegate;
         this.macKey = macKey;
+    }
+    public static SecureTokenStore wrap(ConfidentialTokenStore store,
+                                        Key macKey) {
+        return new HmacTokenStore(store, macKey);
+    }
+    public static AuthenticatedTokenStore wrap(TokenStore store,
+                                          Key macKey) {
+        return new HmacTokenStore(store, macKey);
     }
 
     @Override
