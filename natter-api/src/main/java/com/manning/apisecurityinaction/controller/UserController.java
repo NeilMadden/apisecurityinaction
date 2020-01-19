@@ -97,7 +97,6 @@ public class UserController {
 
     public void lookupPermissions(Request request, Response response) {
         requireAuthentication(request, response);
-
         var spaceId = Long.parseLong(request.params(":spaceId"));
         var username = (String) request.attribute("subject");
 

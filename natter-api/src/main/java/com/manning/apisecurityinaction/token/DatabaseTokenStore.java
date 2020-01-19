@@ -1,16 +1,18 @@
 package com.manning.apisecurityinaction.token;
 
+import java.security.SecureRandom;
+import java.sql.*;
+import java.util.Optional;
+import java.util.concurrent.*;
+
 import org.dalesbred.Database;
 import org.json.JSONObject;
 import org.slf4j.*;
 import spark.Request;
 
-import java.security.SecureRandom;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
+import static com.manning.apisecurityinaction.token.CookieTokenStore.sha256;
 
-public class DatabaseTokenStore implements SecureTokenStore {
+public class DatabaseTokenStore implements ConfidentialTokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 
@@ -29,8 +31,7 @@ public class DatabaseTokenStore implements SecureTokenStore {
     private String randomId() {
         var bytes = new byte[20];
         secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(bytes);
+        return Base64url.encode(bytes);
     }
 
     @Override
@@ -40,7 +41,7 @@ public class DatabaseTokenStore implements SecureTokenStore {
 
         database.updateUnique("INSERT INTO " +
             "tokens(token_id, user_id, expiry, attributes) " +
-            "VALUES(?, ?, ?, ?)", tokenId, token.username,
+            "VALUES(?, ?, ?, ?)", hash(tokenId), token.username,
                 token.expiry, attrs);
 
         return tokenId;
@@ -50,13 +51,18 @@ public class DatabaseTokenStore implements SecureTokenStore {
     public Optional<Token> read(Request request, String tokenId) {
         return database.findOptional(this::readToken,
                 "SELECT user_id, expiry, attributes " +
-                "FROM tokens WHERE token_id = ?", tokenId);
+                "FROM tokens WHERE token_id = ?", hash(tokenId));
     }
 
     @Override
     public void revoke(Request request, String tokenId) {
         database.update("DELETE FROM tokens WHERE token_id = ?",
-                tokenId);
+                hash(tokenId));
+    }
+
+    private String hash(String tokenId) {
+        var hash = sha256(tokenId);
+        return Base64url.encode(hash);
     }
 
     private Token readToken(ResultSet resultSet)
