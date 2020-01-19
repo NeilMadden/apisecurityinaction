@@ -74,7 +74,8 @@ public class Main {
         var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
         var introspectionEndpoint =
                 URI.create("https://as.example.com:8443/oauth2/introspect");
-        SecureTokenStore tokenStore = new DatabaseTokenStore(database);
+        SecureTokenStore tokenStore = HmacTokenStore.wrap(
+                new DatabaseTokenStore(database), macKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
