@@ -1,5 +1,12 @@
 package com.manning.apisecurityinaction;
 
+import javax.crypto.SecretKey;
+import java.io.FileInputStream;
+import java.nio.file.*;
+import java.security.KeyStore;
+import java.sql.Connection;
+import java.util.Set;
+
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
@@ -10,13 +17,6 @@ import org.json.*;
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
-
-import javax.crypto.SecretKey;
-import java.io.FileInputStream;
-import java.nio.file.*;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.util.Set;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -66,15 +66,10 @@ public class Main {
         var macKey = keyStore.getKey("hmac-key", keyPassword);
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
-        var header = new JSONObject()
-                .put("alg", "HS256")
-                .put("typ", "JWT");
-
         var tokenWhitelist = new DatabaseTokenStore(database);
-        SecureTokenStore tokenStore =
-                new JwtTokenStore((SecretKey) encKey, tokenWhitelist);
-
-        var tokenController = new TokenController(tokenStore);
+        var tokenController = new TokenController(
+                new EncryptedJwtTokenStore(
+                        (SecretKey) encKey, tokenWhitelist));
 
         before(userController::authenticate);
         before(tokenController::validateToken);

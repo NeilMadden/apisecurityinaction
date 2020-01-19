@@ -1,10 +1,10 @@
 package com.manning.apisecurityinaction.token;
 
-import org.json.*;
-import spark.Request;
-
 import java.time.Instant;
 import java.util.*;
+
+import org.json.*;
+import spark.Request;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -19,14 +19,13 @@ public class JsonTokenStore implements TokenStore {
         json.put("attrs", token.attributes);
 
         var jsonBytes = json.toString().getBytes(UTF_8);
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(jsonBytes);
+        return Base64url.encode(jsonBytes);
     }
 
     @Override
     public Optional<Token> read(Request request, String tokenId) {
         try {
-            var decoded = Base64.getUrlDecoder().decode(tokenId);
+            var decoded = Base64url.decode(tokenId);
             var json = new JSONObject(new String(decoded, UTF_8));
             var expiry = Instant.ofEpochSecond(json.getInt("exp"));
             var username = json.getString("sub");
