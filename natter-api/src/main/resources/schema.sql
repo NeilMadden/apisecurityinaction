@@ -53,7 +53,7 @@ CREATE TABLE user_roles(
 CREATE INDEX user_roles_idx ON user_roles(space_id, user_id);
 
 CREATE TABLE tokens(
-    token_id VARCHAR(30) PRIMARY KEY,
+    token_id VARCHAR(100) PRIMARY KEY,
     user_id VARCHAR(30),
     expiry TIMESTAMP NOT NULL,
     attributes VARCHAR(4096) NOT NULL
