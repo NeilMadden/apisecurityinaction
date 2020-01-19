@@ -1,9 +1,9 @@
 package com.manning.apisecurityinaction.token;
 
+import java.util.*;
+
 import org.json.JSONObject;
 import spark.Request;
-
-import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -21,8 +21,7 @@ public class JwtHeaderTokenStore implements TokenStore {
     public String create(Request request, Token token) {
         var tokenId = delegate.create(request, token);
         var headerBytes = header.toString().getBytes(UTF_8);
-        return Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(headerBytes) + '.' + tokenId;
+        return Base64url.encode(headerBytes) + '.' + tokenId;
     }
 
     @Override
@@ -33,8 +32,7 @@ public class JwtHeaderTokenStore implements TokenStore {
         var encodedHeader = tokenId.substring(0, index);
         var realTokenId = tokenId.substring(index + 1);
 
-        var decodedHeader = Base64.getUrlDecoder()
-                .decode(encodedHeader);
+        var decodedHeader = Base64url.decode(encodedHeader);
         var suppliedHeader = new JSONObject(
                 new String(decodedHeader, UTF_8));
 
