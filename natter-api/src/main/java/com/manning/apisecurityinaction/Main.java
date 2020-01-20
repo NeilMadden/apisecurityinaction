@@ -42,7 +42,7 @@ public class Main {
                 "changeit".toCharArray());
         var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
 
-        SecureTokenStore tokenStore = new HmacTokenStore(
+        SecureTokenStore tokenStore = HmacTokenStore.wrap(
                 new DatabaseTokenStore(database), macKey);
         var capController = new CapabilityController(tokenStore);
         var tokenController = new TokenController(tokenStore);
