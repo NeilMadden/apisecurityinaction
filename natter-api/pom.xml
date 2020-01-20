@@ -56,6 +56,11 @@
       <version>8.3</version>
     </dependency>
     <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <version>1.64</version>
+    </dependency>
+    <dependency>
       <groupId>software.pando.crypto</groupId>
       <artifactId>salty-coffee</artifactId>
       <version>1.0.2</version>
