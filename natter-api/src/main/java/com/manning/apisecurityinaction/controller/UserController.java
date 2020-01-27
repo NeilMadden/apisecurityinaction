@@ -29,17 +29,21 @@ public class UserController {
             Response response) throws Exception {
         var json = new JSONObject(request.body());
         var username = json.getString("username");
-        var password = json.getString("password");
+        var password = json.optString("password", null);
 
         if (!username.matches(USERNAME_PATTERN)) {
             throw new IllegalArgumentException("invalid username");
         }
-        if (password.length() < 8) {
-            throw new IllegalArgumentException(
-                    "password must be at least 8 characters");
-        }
 
-        var hash = SCryptUtil.scrypt(password, 32768, 8, 1);
+        String hash = null;
+        if (password != null) {
+            if (password.length() < 8) {
+                throw new IllegalArgumentException(
+                        "password must be at least 8 characters");
+            }
+
+            hash = SCryptUtil.scrypt(password, 32768, 8, 1);
+        }
         database.updateUnique(
                 "INSERT INTO users(user_id, pw_hash)" +
                         " VALUES(?, ?)", username, hash);

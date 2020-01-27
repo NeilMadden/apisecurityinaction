@@ -1,6 +1,6 @@
 CREATE TABLE users(
     user_id VARCHAR(30) PRIMARY KEY,
-    pw_hash VARCHAR(255) NOT NULL
+    pw_hash VARCHAR(255)
 );
 CREATE TABLE group_members(
     group_id VARCHAR(30),
