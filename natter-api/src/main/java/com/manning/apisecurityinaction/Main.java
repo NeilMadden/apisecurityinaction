@@ -1,6 +1,7 @@
 package com.manning.apisecurityinaction;
 
 import java.io.FileInputStream;
+import java.net.URI;
 import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
@@ -45,7 +46,12 @@ public class Main {
         SecureTokenStore tokenStore = HmacTokenStore.wrap(
                 new DatabaseTokenStore(database), macKey);
         var capController = new CapabilityController(tokenStore);
-        var tokenController = new TokenController(tokenStore);
+
+        var introspectionEndpoint = URI.create(
+                "http://as.example.com:8080/oauth2/instrospect");
+        var oauthStore = new OAuth2TokenStore(introspectionEndpoint,
+                "rs", "password");
+        var tokenController = new TokenController(oauthStore);
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 

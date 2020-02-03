@@ -79,16 +79,11 @@ public class UserController {
 
     void processClientCertificateAuth(Request request) {
         var pem = request.headers("ssl-client-cert");
-        pem = URLDecoder.decode(pem, UTF_8);
-
-        try (var in = new ByteArrayInputStream(pem.getBytes(UTF_8))) {
-            var certFactory = CertificateFactory.getInstance("X.509");
-            var cert = (X509Certificate) certFactory.generateCertificate(in);
-
+        var cert = decodeCert(pem);
+        try {
             if (cert.getSubjectAlternativeNames() == null) {
                 return;
             }
-
             for (var san : cert.getSubjectAlternativeNames()) {
                 if ((Integer) san.get(0) == DNS_TYPE) {
                     var subject = (String) san.get(1);
@@ -96,8 +91,17 @@ public class UserController {
                     return;
                 }
             }
+        } catch (CertificateParsingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        } catch (CertificateException | IOException e) {
+    public static X509Certificate decodeCert(String encodedCert) {
+        var pem = URLDecoder.decode(encodedCert, UTF_8);
+        try (var in = new ByteArrayInputStream(pem.getBytes(UTF_8))) {
+            var certFactory = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) certFactory.generateCertificate(in);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
