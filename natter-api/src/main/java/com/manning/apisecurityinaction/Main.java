@@ -2,6 +2,7 @@ package com.manning.apisecurityinaction;
 
 import java.io.FileInputStream;
 import java.net.URI;
+import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
@@ -30,9 +31,13 @@ public class Main {
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
+        var secretsPath = Paths.get("/etc/secrets/database");
+        var dbUsername = Files.readString(secretsPath.resolve("username"));
+        var dbPassword = Files.readString(secretsPath.resolve("password"));
+
         var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
-            jdbcUrl, "natter", "password");
+            jdbcUrl, dbUsername, dbPassword);
         createTables(datasource.getConnection());
         datasource = JdbcConnectionPool.create(
             jdbcUrl, "natter_api_user", "password");
