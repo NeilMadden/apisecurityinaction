@@ -84,3 +84,8 @@ descriptions for HTTP requests that can be
 
  - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter10)
  - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter10-end)
+
+### Chapter 11 - Securing service to service APIs
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter11)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter11-end)
