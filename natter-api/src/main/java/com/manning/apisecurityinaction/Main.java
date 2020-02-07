@@ -14,6 +14,7 @@ import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
+import software.pando.crypto.nacl.Crypto;
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
@@ -47,6 +48,16 @@ public class Main {
         keystore.load(new FileInputStream("keystore.p12"),
                 "changeit".toCharArray());
         var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
+
+        // Examples of deriving keys using HKDF:
+        // Derive a symmetric AES key
+        var encKey = HKDF.expand(macKey, "token-encryption-key",
+                32, "AES");
+
+        // Derive an Ed25519 signature key pair
+        var seed = HKDF.expand(macKey, "nacl-signing-key-seed",
+                32, "NaCl");
+        var keyPair = Crypto.seedSigningKeyPair(seed.getEncoded());
 
         SecureTokenStore tokenStore = HmacTokenStore.wrap(
                 new DatabaseTokenStore(database), macKey);
