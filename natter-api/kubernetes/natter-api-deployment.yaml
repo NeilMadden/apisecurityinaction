@@ -19,6 +19,10 @@ spec:
         - name: natter-api
           image: apisecurityinaction/natter-api:latest
           imagePullPolicy: Never
+          volumeMounts:
+            - name: db-password
+              mountPath: "/etc/secrets/database"
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -27,3 +31,7 @@ spec:
                 - all
           ports:
             - containerPort: 4567
+      volumes:
+        - name: db-password
+          secret:
+            secretName: db-password

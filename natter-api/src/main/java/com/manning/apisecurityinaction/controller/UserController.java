@@ -1,6 +1,8 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.nio.charset.StandardCharsets;
+import java.io.*;
+import java.net.URLDecoder;
+import java.security.cert.*;
 import java.util.Base64;
 
 import com.lambdaworks.crypto.SCryptUtil;
@@ -9,10 +11,13 @@ import org.dalesbred.query.QueryBuilder;
 import org.json.JSONObject;
 import spark.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Spark.halt;
 
 public class UserController {
-    static final String USERNAME_PATTERN = "[a-zA-Z][a-zA-Z0-9]{1,29}";
+    private static final String USERNAME_PATTERN =
+            "[a-zA-Z][a-zA-Z0-9]{1,29}";
+    private static final int DNS_TYPE = 2;
 
     private final Database database;
 
@@ -24,17 +29,21 @@ public class UserController {
             Response response) throws Exception {
         var json = new JSONObject(request.body());
         var username = json.getString("username");
-        var password = json.getString("password");
+        var password = json.optString("password", null);
 
         if (!username.matches(USERNAME_PATTERN)) {
             throw new IllegalArgumentException("invalid username");
         }
-        if (password.length() < 8) {
-            throw new IllegalArgumentException(
-                    "password must be at least 8 characters");
-        }
 
-        var hash = SCryptUtil.scrypt(password, 32768, 8, 1);
+        String hash = null;
+        if (password != null) {
+            if (password.length() < 8) {
+                throw new IllegalArgumentException(
+                        "password must be at least 8 characters");
+            }
+
+            hash = SCryptUtil.scrypt(password, 32768, 8, 1);
+        }
         database.updateUnique(
                 "INSERT INTO users(user_id, pw_hash)" +
                         " VALUES(?, ?)", username, hash);
@@ -45,6 +54,10 @@ public class UserController {
     }
 
     public void authenticate(Request request, Response response) {
+        if ("SUCCESS".equals(request.headers("ssl-client-verify"))) {
+            processClientCertificateAuth(request);
+            return;
+        }
         var credentials = getCredentials(request);
         if (credentials == null) return;
 
@@ -64,6 +77,35 @@ public class UserController {
         }
     }
 
+    void processClientCertificateAuth(Request request) {
+        var pem = request.headers("ssl-client-cert");
+        var cert = decodeCert(pem);
+        try {
+            if (cert.getSubjectAlternativeNames() == null) {
+                return;
+            }
+            for (var san : cert.getSubjectAlternativeNames()) {
+                if ((Integer) san.get(0) == DNS_TYPE) {
+                    var subject = (String) san.get(1);
+                    request.attribute("subject", subject);
+                    return;
+                }
+            }
+        } catch (CertificateParsingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static X509Certificate decodeCert(String encodedCert) {
+        var pem = URLDecoder.decode(encodedCert, UTF_8);
+        try (var in = new ByteArrayInputStream(pem.getBytes(UTF_8))) {
+            var certFactory = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) certFactory.generateCertificate(in);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     String[] getCredentials(Request request) {
         var authHeader = request.headers("Authorization");
         if (authHeader == null || !authHeader.startsWith("Basic ")) {
@@ -72,7 +114,7 @@ public class UserController {
 
         var offset = "Basic ".length();
         var credentials = new String(Base64.getDecoder().decode(
-                authHeader.substring(offset)), StandardCharsets.UTF_8);
+                authHeader.substring(offset)), UTF_8);
 
         var components = credentials.split(":", 2);
         if (components.length != 2) {

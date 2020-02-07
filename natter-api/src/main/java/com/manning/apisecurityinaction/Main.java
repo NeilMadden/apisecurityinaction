@@ -1,6 +1,8 @@
 package com.manning.apisecurityinaction;
 
 import java.io.FileInputStream;
+import java.net.URI;
+import java.nio.file.*;
 import java.security.KeyStore;
 import java.sql.Connection;
 import java.util.Set;
@@ -12,6 +14,7 @@ import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
+import software.pando.crypto.nacl.Crypto;
 import spark.*;
 import spark.embeddedserver.EmbeddedServers;
 import spark.embeddedserver.jetty.EmbeddedJettyFactory;
@@ -29,9 +32,13 @@ public class Main {
         port(args.length > 0 ? Integer.parseInt(args[0])
                              : SPARK_DEFAULT_PORT);
 
+        var secretsPath = Paths.get("/etc/secrets/database");
+        var dbUsername = Files.readString(secretsPath.resolve("username"));
+        var dbPassword = Files.readString(secretsPath.resolve("password"));
+
         var jdbcUrl = "jdbc:h2:tcp://natter-database-service:9092/mem:natter";
         var datasource = JdbcConnectionPool.create(
-            jdbcUrl, "natter", "password");
+            jdbcUrl, dbUsername, dbPassword);
         createTables(datasource.getConnection());
         datasource = JdbcConnectionPool.create(
             jdbcUrl, "natter_api_user", "password");
@@ -42,10 +49,25 @@ public class Main {
                 "changeit".toCharArray());
         var macKey = keystore.getKey("hmac-key", "changeit".toCharArray());
 
-        SecureTokenStore tokenStore = new HmacTokenStore(
+        // Examples of deriving keys using HKDF:
+        // Derive a symmetric AES key
+        var encKey = HKDF.expand(macKey, "token-encryption-key",
+                32, "AES");
+
+        // Derive an Ed25519 signature key pair
+        var seed = HKDF.expand(macKey, "nacl-signing-key-seed",
+                32, "NaCl");
+        var keyPair = Crypto.seedSigningKeyPair(seed.getEncoded());
+
+        SecureTokenStore tokenStore = HmacTokenStore.wrap(
                 new DatabaseTokenStore(database), macKey);
         var capController = new CapabilityController(tokenStore);
-        var tokenController = new TokenController(tokenStore);
+
+        var introspectionEndpoint = URI.create(
+                "http://as.example.com:8080/oauth2/instrospect");
+        var oauthStore = new OAuth2TokenStore(introspectionEndpoint,
+                "rs", "password");
+        var tokenController = new TokenController(oauthStore);
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
 

@@ -7,9 +7,11 @@ import java.net.http.*;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.security.*;
+import java.security.cert.*;
 import java.time.Instant;
 import java.util.*;
 
+import com.manning.apisecurityinaction.controller.UserController;
 import org.json.JSONObject;
 import spark.Request;
 
@@ -99,7 +101,7 @@ public class OAuth2TokenStore implements SecureTokenStore {
                 var json = new JSONObject(httpResponse.body());
 
                 if (json.getBoolean("active")) {
-                    return processResponse(json);
+                    return processResponse(json, request);
                 }
             }
         } catch (IOException e) {
@@ -112,9 +114,28 @@ public class OAuth2TokenStore implements SecureTokenStore {
         return Optional.empty();
     }
 
-    private Optional<Token> processResponse(JSONObject response) {
+    private Optional<Token> processResponse(JSONObject response,
+            Request originalRequest) {
         var expiry = Instant.ofEpochSecond(response.getLong("exp"));
         var subject = response.getString("sub");
+
+        var confirmationKey = response.optJSONObject("cnf");
+        if (confirmationKey != null) {
+            for (var method : confirmationKey.keySet()) {
+                if (!"x5t#S256".equals(method)) {
+                    throw new RuntimeException(
+                            "Unknown confirmation method: " + method);
+                }
+                var expectedHash = Base64url.decode(
+                        confirmationKey.getString(method));
+                var cert = UserController.decodeCert(
+                        originalRequest.headers("ssl-client-cert"));
+                var certHash = thumbprint(cert);
+                if (!MessageDigest.isEqual(expectedHash, certHash)) {
+                    return Optional.empty();
+                }
+            }
+        }
 
         var token = new Token(expiry, subject);
 
@@ -125,6 +146,15 @@ public class OAuth2TokenStore implements SecureTokenStore {
         return Optional.of(token);
     }
 
+
+    private byte[] thumbprint(X509Certificate certificate) {
+        try {
+            var sha256 = MessageDigest.getInstance("SHA-256");
+            return sha256.digest(certificate.getEncoded());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public void revoke(Request request, String tokenId) {

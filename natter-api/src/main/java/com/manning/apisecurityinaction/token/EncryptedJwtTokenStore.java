@@ -9,13 +9,13 @@ import javax.crypto.SecretKey;
 import java.text.ParseException;
 import java.util.*;
 
-public class JwtTokenStore implements SecureTokenStore {
+public class EncryptedJwtTokenStore implements SecureTokenStore {
 
     private final SecretKey encKey;
     private final DatabaseTokenStore tokenWhitelist;
 
-    public JwtTokenStore(SecretKey encKey,
-                         DatabaseTokenStore tokenWhitelist) {
+    public EncryptedJwtTokenStore(SecretKey encKey,
+                                  DatabaseTokenStore tokenWhitelist) {
         this.encKey = encKey;
         this.tokenWhitelist = tokenWhitelist;
     }
@@ -32,12 +32,13 @@ public class JwtTokenStore implements SecureTokenStore {
                 .expirationTime(Date.from(token.expiry));
         token.attributes.forEach(claimsBuilder::claim);
 
-        var header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A256GCM);
+        var header = new JWEHeader(JWEAlgorithm.DIR,
+                EncryptionMethod.A128CBC_HS256);
         var jwt = new EncryptedJWT(header, claimsBuilder.build());
 
         try {
-            var encryptor = new DirectEncrypter(encKey);
-            jwt.encrypt(encryptor);
+            var encrypter = new DirectEncrypter(encKey);
+            jwt.encrypt(encrypter);
         } catch (JOSEException e) {
             throw new RuntimeException(e);
         }
