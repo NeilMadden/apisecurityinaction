@@ -126,6 +126,10 @@ public class OAuth2TokenStore implements SecureTokenStore {
                     throw new RuntimeException(
                             "Unknown confirmation method: " + method);
                 }
+                if (!"SUCCESS".equals(
+                        originalRequest.headers("ssl-client-verify"))) {
+                    return Optional.empty();
+                }
                 var expectedHash = Base64url.decode(
                         confirmationKey.getString(method));
                 var cert = UserController.decodeCert(
