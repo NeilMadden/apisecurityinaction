@@ -5,7 +5,7 @@ metadata:
   namespace: natter-api
 spec:
   selector:
-    app: link-preview-service
+    app: link-preview
   ports:
     - protocol: TCP
       port: 4567

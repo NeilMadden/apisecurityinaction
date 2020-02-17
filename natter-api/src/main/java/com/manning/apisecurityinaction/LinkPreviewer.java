@@ -13,9 +13,9 @@ import spark.ExceptionHandler;
 import static org.jsoup.Connection.Method.GET;
 import static spark.Spark.*;
 
-public class LinkPreviewService {
+public class LinkPreviewer {
     private static final Logger logger =
-            LoggerFactory.getLogger(LinkPreviewService.class);
+            LoggerFactory.getLogger(LinkPreviewer.class);
 
     public static void main(String...args) {
         afterAfter((request, response) -> {
