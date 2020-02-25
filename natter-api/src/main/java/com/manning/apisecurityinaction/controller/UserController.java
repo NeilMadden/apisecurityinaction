@@ -15,7 +15,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Spark.halt;
 
 public class UserController {
-    private static final String USERNAME_PATTERN =
+    static final String USERNAME_PATTERN =
             "[a-zA-Z][a-zA-Z0-9]{1,29}";
     private static final int DNS_TYPE = 2;
 
