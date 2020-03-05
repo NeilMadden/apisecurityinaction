@@ -7,20 +7,26 @@ import java.security.KeyStore;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class DtlsClient {
-    public static void main(String... args) throws Exception {
+import org.slf4j.*;
 
-        try (var channel = new DtlsDatagramChannel(getClientContext(), sslParameters());
+public class DtlsClient {
+    private static final Logger logger = LoggerFactory.getLogger(DtlsClient.class);
+
+    public static void main(String... args) throws Exception {
+        try (var channel = new DtlsDatagramChannel(getClientContext());
              var in = Files.newBufferedReader(Paths.get("test.txt"))) {
+            logger.info("Connecting to localhost:54321");
             channel.connect("localhost", 54321);
 
             String line;
             while ((line = in.readLine()) != null) {
-                System.out.println("Sending packet to server");
+                logger.info("Sending packet to server: {}", line);
                 channel.send(line.getBytes(UTF_8));
             }
 
-            System.out.println("All packets sent");
+            logger.info("All packets sent");
+            logger.info("Used cipher suite: {}",
+                    channel.getSession().getCipherSuite());
         }
     }
 
@@ -40,12 +46,4 @@ public class DtlsClient {
         return sslContext;
     }
 
-    static SSLParameters sslParameters() {
-        var params = new SSLParameters();
-        params.setProtocols(new String[] { "DTLSv1.2" });
-        params.setMaximumPacketSize(1500);
-        params.setEnableRetransmissions(true);
-        params.setEndpointIdentificationAlgorithm("HTTPS");
-        return params;
-    }
 }

@@ -1,28 +1,34 @@
 package com.manning.apisecurityinaction;
 
-import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 
+import javax.net.ssl.*;
+
+import org.slf4j.*;
+
 public class DtlsServer {
-    static final int PACKET_SIZE = 1024;
+    private static final Logger logger = LoggerFactory.getLogger(DtlsServer.class);
 
     public static void main(String... args) throws Exception {
-        try (var channel = new DtlsDatagramChannel(
-                getServerContext(), DtlsClient.sslParameters())) {
+        try (var channel = new DtlsDatagramChannel(getServerContext())) {
             channel.bind(54321);
-            System.out.println("Listening on port 54321");
+            logger.info("Listening on port 54321");
 
-            var buffer = ByteBuffer.allocate(PACKET_SIZE);
+            var buffer = ByteBuffer.allocate(2048);
 
             while (true) {
                 channel.receive(buffer);
                 buffer.flip();
-                var data = buffer.asCharBuffer().toString();
-                System.out.println("Data: " + data);
+                var data = StandardCharsets.UTF_8.decode(buffer).toString();
+                logger.info("Received: {}", data);
                 buffer.compact();
             }
+        } catch (ClosedChannelException e) {
+            logger.info("Client disconnected");
         }
     }
 
