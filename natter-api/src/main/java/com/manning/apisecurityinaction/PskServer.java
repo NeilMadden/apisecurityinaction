@@ -16,6 +16,18 @@ public class PskServer {
             protected ProtocolVersion[] getSupportedVersions() {
                 return ProtocolVersion.DTLSv12.only();
             }
+            @Override
+            protected int[] getSupportedCipherSuites() {
+                return new int[] {
+                        CipherSuite.TLS_PSK_WITH_AES_128_CCM,
+                        CipherSuite.TLS_PSK_WITH_AES_128_CCM_8,
+                        CipherSuite.TLS_PSK_WITH_AES_256_CCM,
+                        CipherSuite.TLS_PSK_WITH_AES_256_CCM_8,
+                        CipherSuite.TLS_PSK_WITH_AES_128_GCM_SHA256,
+                        CipherSuite.TLS_PSK_WITH_AES_256_GCM_SHA384,
+                        CipherSuite.TLS_PSK_WITH_CHACHA20_POLY1305_SHA256
+                };
+            }
         };
         var buffer = new byte[2048];
         var serverSocket = new DatagramSocket(54321);
@@ -29,6 +41,7 @@ public class PskServer {
 
         while (true) {
             var len = dtls.receive(buffer, 0, buffer.length, 60000);
+            if (len == -1) break;
             var data = new String(buffer, 0, len, UTF_8);
             System.out.println("Received: " + data);
         }

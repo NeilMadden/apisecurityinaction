@@ -1,11 +1,14 @@
 package com.manning.apisecurityinaction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.net.*;
 import java.nio.file.*;
 import java.security.SecureRandom;
+
 import org.bouncycastle.tls.*;
 import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
+
 import software.pando.crypto.nacl.Crypto;
 
 public class PskClient {
@@ -18,6 +21,13 @@ public class PskClient {
             @Override
             protected ProtocolVersion[] getSupportedVersions() {
                 return ProtocolVersion.DTLSv12.only();
+            }
+
+            @Override
+            protected int[] getSupportedCipherSuites() {
+                return new int[] {
+                        CipherSuite.TLS_PSK_WITH_AES_128_CCM
+                };
             }
         };
 
