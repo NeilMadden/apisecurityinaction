@@ -1,32 +1,17 @@
 package com.manning.apisecurityinaction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.FileInputStream;
 import java.net.*;
 import java.security.*;
-
 import org.bouncycastle.tls.*;
 import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
 
-import software.pando.crypto.nacl.Crypto;
-
 public class PskServer {
     public static void main(String[] args) throws Exception {
-        var psk = loadPsk();
-        var pskId = Crypto.hash(psk);
-
+        var psk = loadPsk(args[0].toCharArray());
         var crypto = new BcTlsCrypto(new SecureRandom());
-        var server = new PSKTlsServer(crypto, new TlsPSKIdentityManager() {
-            @Override
-            public byte[] getHint() {
-                return pskId;
-            }
-            @Override
-            public byte[] getPSK(byte[] identity) {
-                return psk;
-            }
-        }) {
+        var server = new PSKTlsServer(crypto, getIdentityManager(psk)) {
             @Override
             protected ProtocolVersion[] getSupportedVersions() {
                 return ProtocolVersion.DTLSv12.only();
@@ -49,11 +34,23 @@ public class PskServer {
         }
     }
 
-    static byte[] loadPsk() throws Exception {
-        var keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream("keystore.p12"),
-                "changeit".toCharArray());
+    static TlsPSKIdentityManager getIdentityManager(byte[] psk) {
+        return new TlsPSKIdentityManager() {
+            @Override
+            public byte[] getHint() {
+                return null;
+            }
 
-        return keyStore.getKey("aes-key", "changeit".toCharArray()).getEncoded();
+            @Override
+            public byte[] getPSK(byte[] identity) {
+                return psk;
+            }
+        };
+    }
+
+    static byte[] loadPsk(char[] password) throws Exception {
+        var keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream("keystore.p12"), password);
+        return keyStore.getKey("aes-key", password).getEncoded();
     }
 }
