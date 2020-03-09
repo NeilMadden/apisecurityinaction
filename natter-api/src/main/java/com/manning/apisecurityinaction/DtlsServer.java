@@ -1,9 +1,9 @@
 package com.manning.apisecurityinaction;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 
 import javax.net.ssl.*;
@@ -23,12 +23,10 @@ public class DtlsServer {
             while (true) {
                 channel.receive(buffer);
                 buffer.flip();
-                var data = StandardCharsets.UTF_8.decode(buffer).toString();
+                var data = UTF_8.decode(buffer).toString();
                 logger.info("Received: {}", data);
                 buffer.compact();
             }
-        } catch (ClosedChannelException e) {
-            logger.info("Client disconnected");
         }
     }
 
