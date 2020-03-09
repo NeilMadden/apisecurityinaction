@@ -1,7 +1,8 @@
 package com.manning.apisecurityinaction;
 
-import java.io.PrintStream;
-import java.net.Socket;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.*;
 import java.nio.file.*;
 import java.security.SecureRandom;
 
@@ -19,23 +20,26 @@ public class PskClient {
         var crypto = new BcTlsCrypto(new SecureRandom());
         var client = new PSKTlsClient(crypto, pskId, psk) {
             @Override
-            protected int[] getSupportedCipherSuites() {
-                return new int[] {
-                        CipherSuite.TLS_PSK_WITH_AES_128_CCM
-                };
+            protected ProtocolVersion[] getSupportedVersions() {
+                return ProtocolVersion.DTLSv12.only();
             }
         };
 
-        var socket = new Socket("localhost", 54321);
+        var address = InetAddress.getByName("localhost");
+        var socket = new DatagramSocket();
+        socket.connect(address, 54321);
 
-        var protocol = new TlsClientProtocol(socket.getInputStream(),
-                socket.getOutputStream());
-        protocol.connect(client);
+        var transport = new UDPTransport(socket, 1500);
+        var protocol = new DTLSClientProtocol();
+        var dtls = protocol.connect(client, transport);
 
-        try (var out = new PrintStream(protocol.getOutputStream());
-             var in = Files.newBufferedReader(Paths.get("test.txt"))) {
-
-            in.lines().forEach(out::println);
+        try (var in = Files.newBufferedReader(Paths.get("test.txt"))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                System.out.println("Sending: " + line);
+                var buf = line.getBytes(UTF_8);
+                dtls.send(buf, 0, buf.length);
+            }
         }
     }
 }

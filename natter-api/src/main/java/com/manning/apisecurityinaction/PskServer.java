@@ -1,7 +1,9 @@
 package com.manning.apisecurityinaction;
 
-import java.io.*;
-import java.net.ServerSocket;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.FileInputStream;
+import java.net.*;
 import java.security.*;
 
 import org.bouncycastle.tls.*;
@@ -20,33 +22,31 @@ public class PskServer {
             public byte[] getHint() {
                 return pskId;
             }
-
             @Override
             public byte[] getPSK(byte[] identity) {
                 return psk;
             }
         }) {
             @Override
-            protected int[] getSupportedCipherSuites() {
-                return new int[] {
-                        CipherSuite.TLS_PSK_WITH_AES_128_CCM
-                };
+            protected ProtocolVersion[] getSupportedVersions() {
+                return ProtocolVersion.DTLSv12.only();
             }
         };
+        var buffer = new byte[2048];
+        var serverSocket = new DatagramSocket(54321);
+        var packet = new DatagramPacket(buffer, buffer.length);
+        serverSocket.receive(packet);
+        serverSocket.connect(packet.getSocketAddress());
 
-        var serverSocket = new ServerSocket(54321);
-        var socket = serverSocket.accept();
-        var protocol = new TlsServerProtocol(
-                socket.getInputStream(), socket.getOutputStream());
-        protocol.accept(server);
+        var protocol = new DTLSServerProtocol();
+        var transport = new UDPTransport(serverSocket, 1500);
+        var dtls = protocol.accept(server, transport);
 
-        try (var in = new BufferedReader(new InputStreamReader(protocol.getInputStream()))) {
-            String line;
-            while ((line = in.readLine()) != null) {
-                System.out.println("Received: " + line);
-            }
+        while (true) {
+            var len = dtls.receive(buffer, 0, buffer.length, 60000);
+            var data = new String(buffer, 0, len, UTF_8);
+            System.out.println("Received: " + data);
         }
-        protocol.close();
     }
 
     static byte[] loadPsk() throws Exception {
