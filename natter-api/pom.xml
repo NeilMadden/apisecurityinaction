@@ -75,6 +75,11 @@
       <artifactId>jmacaroons</artifactId>
       <version>0.4.1</version>
     </dependency>
+    <dependency>
+      <groupId>com.augustcellars.cose</groupId>
+      <artifactId>cose-java</artifactId>
+      <version>1.1.0</version>
+    </dependency>
 
     <!-- Drools rule engine dependencies -->
     <dependency>
