@@ -7,6 +7,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class CoseEncryptionExample {
     private static final SecureRandom random = new SecureRandom();
 
@@ -36,6 +38,17 @@ public class CoseEncryptionExample {
 
         message.encrypt();
         System.out.println(Base64url.encode(message.EncodeToBytes()));
+        // Print the CBOR structure of the message
         System.out.println(message.EncodeToCBORObject());
+
+        // To decrypt
+        var receivedMessage = (EncryptMessage) Message.DecodeFromBytes(message.EncodeToBytes());
+        // The COSE reference implementation uses == to test for recipient equality
+        // (a bug?) so make sure to pass the exact same reference, but add back the key material
+        // that was stripped when generating the message.
+        var self = receivedMessage.getRecipient(0);
+        self.SetKey(new OneKey(keyData));
+        receivedMessage.decrypt(self);
+        System.out.println("Received: " + new String(receivedMessage.GetContent(), UTF_8));
     }
 }
