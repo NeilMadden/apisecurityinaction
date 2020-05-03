@@ -36,7 +36,10 @@ The API server for each chapter can be started using the command
     mvn clean compile exec:java
 
 This will start the Spark/Jetty server running on port 4567. See chapter
-descriptions for HTTP requests that can be
+descriptions for HTTP requests that can be used.
+
+Chapter 10 and onwards have more detailed requirements to run the sample code.
+Please consult the book for exact instructions.
 
 ## Chapters
 
@@ -89,3 +92,13 @@ descriptions for HTTP requests that can be
 
  - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter11)
  - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter11-end)
+
+### Chapter 12 - Securing IoT communications
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter12)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter12-end)
+
+### Chapter 13 - Securing IoT APIs
+
+ - [Starting Point](https://github.com/NeilMadden/apisecurityinaction/tree/chapter13)
+ - [Finished Code](https://github.com/NeilMadden/apisecurityinaction/tree/chapter13-end)
