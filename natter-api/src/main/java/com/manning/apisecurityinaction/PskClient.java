@@ -1,20 +1,18 @@
 package com.manning.apisecurityinaction;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.bouncycastle.tls.*;
+import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
 
 import java.net.*;
 import java.nio.file.*;
 import java.security.SecureRandom;
 
-import org.bouncycastle.tls.*;
-import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
-
-import software.pando.crypto.nacl.Crypto;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class PskClient {
     public static void main(String[] args) throws Exception {
         var psk = PskServer.loadPsk(args[0].toCharArray());
-        var pskId = Crypto.hash(psk);
+        var pskId = "test".getBytes(UTF_8);
 
         var crypto = new BcTlsCrypto(new SecureRandom());
         var client = new PSKTlsClient(crypto, pskId, psk) {
