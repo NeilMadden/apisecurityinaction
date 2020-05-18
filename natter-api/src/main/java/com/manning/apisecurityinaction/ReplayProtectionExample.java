@@ -8,6 +8,7 @@ import java.net.http.*;
 import java.security.KeyPair;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.lang.Integer.parseInt;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static spark.Spark.*;
 
@@ -50,7 +51,8 @@ public class ReplayProtectionExample implements Runnable {
                     serverKeys.getPrivate(), clientKeys.getPublic());
             var cbor = CBORObject.DecodeFromBytes(decrypted);
 
-            if (!cbor.get("method").AsString().equals(request.requestMethod())) {
+            if (!cbor.get("method").AsString()
+                    .equals(request.requestMethod())) {
                 halt(403);
             }
 
@@ -70,15 +72,15 @@ public class ReplayProtectionExample implements Runnable {
         // and updated in a transaction.
         var etag = new AtomicInteger(42);
         put("/test", (request, response) -> {
-            CBORObject decryptedRequest = request.attribute("decryptedRequest");
-            var expectedEtag = Integer.parseInt(request.headers("If-Matches"));
+            var expectedEtag = parseInt(request.headers("If-Matches"));
 
             if (!etag.compareAndSet(expectedEtag, expectedEtag + 1)) {
                 response.status(412);
                 return null;
             }
 
-            System.out.println("Updating resource with new content: " + decryptedRequest);
+            System.out.println("Updating resource with new content: " +
+                    request.attribute("decryptedRequest"));
 
             response.status(200);
             response.header("ETag", String.valueOf(expectedEtag + 1));
