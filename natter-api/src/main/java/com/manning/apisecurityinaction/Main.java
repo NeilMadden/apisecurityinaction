@@ -64,8 +64,8 @@ public class Main {
                 keyPassword);
         var macKey = keyStore.getKey("hmac-key", keyPassword);
 
-        TokenStore tokenStore = new DatabaseTokenStore(database);
-        tokenStore = new HmacTokenStore(tokenStore, macKey);
+        var databaseTokenStore = new DatabaseTokenStore(database);
+        var tokenStore = new HmacTokenStore(databaseTokenStore, macKey);
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
@@ -110,6 +110,12 @@ public class Main {
                 userController.requirePermission("DELETE", "d"));
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
+
+        before("/expired_tokens", userController::requireAuthentication);
+        delete("/expired_tokens", (request, response) -> {
+            databaseTokenStore.deleteExpiredTokens();
+            return new JSONObject();
+        });
 
         afterAfter((request, response) -> {
             response.type("application/json; charset=utf-8");
