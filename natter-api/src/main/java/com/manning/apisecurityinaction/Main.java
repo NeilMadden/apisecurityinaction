@@ -46,6 +46,17 @@ public class Main {
             }
         }));
 
+        afterAfter((request, response) -> {
+            response.type("application/json;charset=utf-8");
+            response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-Frame-Options", "DENY");
+            response.header("X-XSS-Protection", "0");
+            response.header("Cache-Control", "no-store");
+            response.header("Content-Security-Policy",
+                    "default-src 'none'; frame-ancestors 'none'; sandbox");
+            response.header("Server", "");
+        });
+
         before(userController::authenticate);
 
         var auditController = new AuditController(database);
@@ -58,6 +69,8 @@ public class Main {
 
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
+
+        // Additional REST endpoints not covered in the book:
 
         before("/spaces/:spaceId/messages",
                 userController.requirePermission("POST", "w"));
@@ -83,17 +96,6 @@ public class Main {
                 userController.requirePermission("DELETE", "d"));
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
-
-        afterAfter((request, response) -> {
-            response.type("application/json; charset=utf-8");
-            response.header("X-Content-Type-Options", "nosniff");
-            response.header("X-Frame-Options", "deny");
-            response.header("X-XSS-Protection", "1; mode=block");
-            response.header("Cache-Control", "private, max-age=0");
-            response.header("Content-Security-Policy",
-                "default-src 'none'; frame-ancestors 'none'; sandbox");
-            response.header("Server", "");
-        });
 
         internalServerError(new JSONObject()
             .put("error", "internal server error").toString());
