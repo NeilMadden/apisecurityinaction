@@ -3,7 +3,6 @@ package com.manning.apisecurityinaction;
 import static spark.Spark.*;
 
 import java.nio.file.*;
-import java.sql.Connection;
 
 import org.dalesbred.Database;
 import org.dalesbred.result.EmptyResultException;
@@ -27,13 +26,15 @@ public class Main {
         secure("localhost.p12", "changeit", null, null);
         var datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter", "password");
-        createTables(datasource.getConnection());
+        var database = Database.forDataSource(datasource);
+        createTables(database);
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
 
-        var database = Database.forDataSource(datasource);
+        database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
         var userController = new UserController(database);
+        var auditController = new AuditController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
 
@@ -52,13 +53,23 @@ public class Main {
             }
         }));
 
+        afterAfter((request, response) -> {
+            response.type("application/json;charset=utf-8");
+            response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-Frame-Options", "DENY");
+            response.header("X-XSS-Protection", "0");
+            response.header("Cache-Control", "no-store");
+            response.header("Content-Security-Policy",
+                    "default-src 'none'; frame-ancestors 'none'; sandbox");
+            response.header("Server", "");
+        });
+
         TokenStore tokenStore = new CookieTokenStore();
         var tokenController = new TokenController(tokenStore);
 
         before(userController::authenticate);
         before(tokenController::validateToken);
 
-        var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
@@ -66,12 +77,10 @@ public class Main {
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
 
-        get("/logs", auditController::readAuditLog);
-
-        post("/users", userController::registerUser);
-
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
+
+        // Additional REST endpoints not covered in the book:
 
         before("/spaces/:spaceId/messages",
                 userController.requirePermission("POST", "w"));
@@ -98,16 +107,8 @@ public class Main {
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
 
-        afterAfter((request, response) -> {
-            response.type("application/json; charset=utf-8");
-            response.header("X-Content-Type-Options", "nosniff");
-            response.header("X-Frame-Options", "deny");
-            response.header("X-XSS-Protection", "1; mode=block");
-            response.header("Cache-Control", "private, max-age=0");
-            response.header("Content-Security-Policy",
-                "default-src 'none'; frame-ancestors 'none'; sandbox");
-            response.header("Server", "");
-        });
+        get("/logs", auditController::readAuditLog);
+        post("/users", userController::registerUser);
 
         internalServerError(new JSONObject()
             .put("error", "internal server error").toString());
@@ -126,14 +127,9 @@ public class Main {
     response.body(new JSONObject().put("error", ex.getMessage()).toString());
   }
 
-    private static void createTables(Connection connection) throws Exception {
-        try (var conn = connection;
-             var stmt = conn.createStatement()) {
-            conn.setAutoCommit(false);
-            Path path = Paths.get(
-                    Main.class.getResource("/schema.sql").toURI());
-            stmt.execute(Files.readString(path));
-            conn.commit();
-        }
+    private static void createTables(Database database) throws Exception {
+        var path = Paths.get(
+                Main.class.getResource("/schema.sql").toURI());
+        database.update(Files.readString(path));
     }
 }
