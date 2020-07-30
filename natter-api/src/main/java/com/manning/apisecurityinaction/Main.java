@@ -28,6 +28,7 @@ public class Main {
         database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
         var userController = new UserController(database);
+        var auditController = new AuditController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
 
@@ -59,13 +60,8 @@ public class Main {
 
         before(userController::authenticate);
 
-        var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
-
-        get("/logs", auditController::readAuditLog);
-
-        post("/users", userController::registerUser);
 
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
@@ -96,6 +92,9 @@ public class Main {
                 userController.requirePermission("DELETE", "d"));
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
+
+        get("/logs", auditController::readAuditLog);
+        post("/users", userController::registerUser);
 
         internalServerError(new JSONObject()
             .put("error", "internal server error").toString());

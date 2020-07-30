@@ -84,7 +84,7 @@ public class UserController {
 
     public Filter requirePermission(String method, String permission) {
         return (request, response) -> {
-            if (!method.equals(request.requestMethod())) {
+            if (!method.equalsIgnoreCase(request.requestMethod())) {
                 return;
             }
 
