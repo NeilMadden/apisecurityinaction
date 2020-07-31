@@ -89,6 +89,8 @@ public class Main {
         afterAfter(auditController::auditRequestEnd);
 
         before("/sessions", userController::requireAuthentication);
+        before("/sessions",
+                tokenController.requireScope("POST", "full_access"));
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
 
