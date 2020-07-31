@@ -67,6 +67,7 @@ public class SpaceController {
     });
   }
 
+  // Additional REST API endpoints not covered in the book:
   public JSONObject postMessage(Request request, Response response) {
     var spaceId = Long.parseLong(request.params(":spaceId"));
     var json = new JSONObject(request.body());
