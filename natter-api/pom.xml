@@ -51,7 +51,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>8.3</version>
+      <version>8.19</version>
     </dependency>
     <dependency>
       <groupId>software.pando.crypto</groupId>
