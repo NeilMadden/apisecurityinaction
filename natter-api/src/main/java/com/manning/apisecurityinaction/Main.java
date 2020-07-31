@@ -1,12 +1,5 @@
 package com.manning.apisecurityinaction;
 
-import javax.crypto.SecretKey;
-import java.io.FileInputStream;
-import java.nio.file.*;
-import java.security.KeyStore;
-import java.sql.Connection;
-import java.util.Set;
-
 import com.google.common.util.concurrent.RateLimiter;
 import com.manning.apisecurityinaction.controller.*;
 import com.manning.apisecurityinaction.token.*;
@@ -15,8 +8,12 @@ import org.dalesbred.result.EmptyResultException;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.json.*;
 import spark.*;
-import spark.embeddedserver.EmbeddedServers;
-import spark.embeddedserver.jetty.EmbeddedJettyFactory;
+
+import javax.crypto.SecretKey;
+import java.io.FileInputStream;
+import java.nio.file.*;
+import java.security.KeyStore;
+import java.util.Set;
 
 import static spark.Service.SPARK_DEFAULT_PORT;
 import static spark.Spark.*;
@@ -24,8 +21,6 @@ import static spark.Spark.*;
 public class Main {
 
     public static void main(String... args) throws Exception {
-        EmbeddedServers.add(EmbeddedServers.defaultIdentifier(),
-                new EmbeddedJettyFactory().withHttpOnly(true));
         Spark.staticFiles.location("/public");
         secure("localhost.p12", "changeit", null, null);
         port(args.length > 0 ? Integer.parseInt(args[0])
@@ -33,13 +28,15 @@ public class Main {
 
         var datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter", "password");
-        createTables(datasource.getConnection());
+        var database = Database.forDataSource(datasource);
+        createTables(database);
         datasource = JdbcConnectionPool.create(
             "jdbc:h2:mem:natter", "natter_api_user", "password");
 
-        var database = Database.forDataSource(datasource);
+        database = Database.forDataSource(datasource);
         var spaceController = new SpaceController(database);
         var userController = new UserController(database);
+        var auditController = new AuditController(database);
 
         var rateLimiter = RateLimiter.create(2.0d);
         before((request, response) -> {
@@ -58,6 +55,17 @@ public class Main {
             }
         }));
 
+        afterAfter((request, response) -> {
+            response.type("application/json;charset=utf-8");
+            response.header("X-Content-Type-Options", "nosniff");
+            response.header("X-Frame-Options", "DENY");
+            response.header("X-XSS-Protection", "0");
+            response.header("Cache-Control", "no-store");
+            response.header("Content-Security-Policy",
+                    "default-src 'none'; frame-ancestors 'none'; sandbox");
+            response.header("Server", "");
+        });
+
         var keyPassword = System.getProperty("keystore.password",
                 "changeit").toCharArray();
         var keyStore = KeyStore.getInstance("PKCS12");
@@ -74,7 +82,6 @@ public class Main {
         before(userController::authenticate);
         before(tokenController::validateToken);
 
-        var auditController = new AuditController(database);
         before(auditController::auditRequestStart);
         afterAfter(auditController::auditRequestEnd);
 
@@ -82,12 +89,10 @@ public class Main {
         post("/sessions", tokenController::login);
         delete("/sessions", tokenController::logout);
 
-        get("/logs", auditController::readAuditLog);
-
-        post("/users", userController::registerUser);
-
         before("/spaces", userController::requireAuthentication);
         post("/spaces", spaceController::createSpace);
+
+        // Additional REST endpoints not covered in the book:
 
         before("/spaces/:spaceId/messages",
                 userController.requirePermission("POST", "w"));
@@ -114,16 +119,8 @@ public class Main {
         delete("/spaces/:spaceId/messages/:msgId",
             moderatorController::deletePost);
 
-        afterAfter((request, response) -> {
-            response.type("application/json; charset=utf-8");
-            response.header("X-Content-Type-Options", "nosniff");
-            response.header("X-Frame-Options", "deny");
-            response.header("X-XSS-Protection", "1; mode=block");
-            response.header("Cache-Control", "private, max-age=0");
-            response.header("Content-Security-Policy",
-                "default-src 'none'; frame-ancestors 'none'; sandbox");
-            response.header("Server", "");
-        });
+        get("/logs", auditController::readAuditLog);
+        post("/users", userController::registerUser);
 
         internalServerError(new JSONObject()
             .put("error", "internal server error").toString());
@@ -142,14 +139,9 @@ public class Main {
     response.body(new JSONObject().put("error", ex.getMessage()).toString());
   }
 
-    private static void createTables(Connection connection) throws Exception {
-        try (var conn = connection;
-             var stmt = conn.createStatement()) {
-            conn.setAutoCommit(false);
-            Path path = Paths.get(
-                    Main.class.getResource("/schema.sql").toURI());
-            stmt.execute(Files.readString(path));
-            conn.commit();
-        }
+    private static void createTables(Database database) throws Exception {
+        var path = Paths.get(
+                Main.class.getResource("/schema.sql").toURI());
+        database.update(Files.readString(path));
     }
 }
