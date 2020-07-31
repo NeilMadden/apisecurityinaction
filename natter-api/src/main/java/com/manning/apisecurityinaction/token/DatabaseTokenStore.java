@@ -78,7 +78,7 @@ public class DatabaseTokenStore implements ConfidentialTokenStore {
         return token;
     }
 
-    private void deleteExpiredTokens() {
+    public void deleteExpiredTokens() {
         var deleted = database.update(
             "DELETE FROM tokens WHERE expiry < current_timestamp");
         logger.info("Deleted {} expired tokens", deleted);
