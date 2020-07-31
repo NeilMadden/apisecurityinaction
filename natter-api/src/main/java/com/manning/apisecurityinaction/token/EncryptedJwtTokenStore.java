@@ -12,18 +12,18 @@ import java.util.*;
 public class EncryptedJwtTokenStore implements SecureTokenStore {
 
     private final SecretKey encKey;
-    private final DatabaseTokenStore tokenWhitelist;
+    private final DatabaseTokenStore tokenAllowlist;
 
     public EncryptedJwtTokenStore(SecretKey encKey,
-                                  DatabaseTokenStore tokenWhitelist) {
+                                  DatabaseTokenStore tokenAllowlist) {
         this.encKey = encKey;
-        this.tokenWhitelist = tokenWhitelist;
+        this.tokenAllowlist = tokenAllowlist;
     }
 
     @Override
     public String create(Request request, Token token) {
-        var whitelistToken = new Token(token.expiry, token.username);
-        var jwtId = tokenWhitelist.create(request, whitelistToken);
+        var allowlistToken = new Token(token.expiry, token.username);
+        var jwtId = tokenAllowlist.create(request, allowlistToken);
 
         var claimsBuilder = new JWTClaimsSet.Builder()
                 .jwtID(jwtId)
@@ -56,7 +56,7 @@ public class EncryptedJwtTokenStore implements SecureTokenStore {
 
             var claims = jwt.getJWTClaimsSet();
             var jwtId = claims.getJWTID();
-            if (tokenWhitelist.read(request, jwtId).isEmpty()) {
+            if (tokenAllowlist.read(request, jwtId).isEmpty()) {
                 return Optional.empty();
             }
 
@@ -88,7 +88,7 @@ public class EncryptedJwtTokenStore implements SecureTokenStore {
             jwt.decrypt(decryptor);
             var claims = jwt.getJWTClaimsSet();
 
-            tokenWhitelist.revoke(request, claims.getJWTID());
+            tokenAllowlist.revoke(request, claims.getJWTID());
         } catch (ParseException | JOSEException e) {
             throw new IllegalArgumentException("invalid token", e);
         }
