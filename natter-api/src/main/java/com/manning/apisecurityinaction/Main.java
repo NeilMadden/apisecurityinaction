@@ -99,11 +99,11 @@ public class Main {
                 tokenController.requireScope("POST", "create_space"));
         post("/spaces", spaceController::createSpace);
 
-        // Additional REST endpoints not covered in the book:
         before("/spaces/:spaceId/messages", capController::lookupPermissions);
         before("/spaces/:spaceId/messages/*", capController::lookupPermissions);
         before("/spaces/:spaceId/members", capController::lookupPermissions);
 
+        // Additional REST endpoints not covered in the book:
         before("/spaces/*/messages",
                 tokenController.requireScope("POST", "post_message"));
         before("/spaces/:spaceId/messages",
@@ -141,6 +141,8 @@ public class Main {
 
         get("/logs", auditController::readAuditLog);
         post("/users", userController::registerUser);
+
+        post("/share", capController::share);
 
         internalServerError(new JSONObject()
             .put("error", "internal server error").toString());
