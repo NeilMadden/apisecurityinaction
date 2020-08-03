@@ -1,12 +1,14 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.net.*;
-import java.time.Instant;
-import java.util.Objects;
-
 import com.manning.apisecurityinaction.token.SecureTokenStore;
 import com.manning.apisecurityinaction.token.TokenStore.Token;
 import spark.*;
+
+import java.net.URI;
+import java.time.Duration;
+import java.util.Objects;
+
+import static java.time.Instant.now;
 
 public class CapabilityController {
 
@@ -16,28 +18,21 @@ public class CapabilityController {
         this.tokenStore = tokenStore;
     }
 
-    public URI createUri(Request request, String path, String perms) {
-        var token = new Token(Instant.MAX, null);
+    public URI createUri(Request request, String path, String perms,
+                         Duration expiryDuration) {
+        var token = new Token(now().plus(expiryDuration), null);
         token.attributes.put("path", path);
         token.attributes.put("perms", perms);
 
         var tokenId = tokenStore.create(request, token);
 
-        var base = URI.create(request.url());
-        try {
-            return new URI(base.getScheme(), ":" + tokenId,
-                    base.getHost(),
-                    base.getPort(), path, null, null);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        var uri = URI.create(request.uri());
+        return uri.resolve(path + "?access_token=" + tokenId);
     }
 
     public void lookupPermissions(Request request, Response response) {
-        var authHeader = request.headers("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer "))
-            return;
-        var tokenId = authHeader.substring(7).trim();
+        var tokenId = request.queryParams("access_token");
+        if (tokenId == null) { return; }
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             var tokenPath = token.attributes.get("path");

@@ -1,18 +1,18 @@
 package com.manning.apisecurityinaction.token;
 
-import java.security.SecureRandom;
-import java.sql.*;
-import java.util.Optional;
-import java.util.concurrent.*;
-
 import org.dalesbred.Database;
 import org.json.JSONObject;
 import org.slf4j.*;
 import spark.Request;
 
+import java.security.SecureRandom;
+import java.sql.*;
+import java.util.Optional;
+import java.util.concurrent.*;
+
 import static com.manning.apisecurityinaction.token.CookieTokenStore.sha256;
 
-public class DatabaseTokenStore implements ConfidentialTokenStore {
+public class DatabaseTokenStore implements SecureTokenStore {
     private static final Logger logger =
             LoggerFactory.getLogger(DatabaseTokenStore.class);
 

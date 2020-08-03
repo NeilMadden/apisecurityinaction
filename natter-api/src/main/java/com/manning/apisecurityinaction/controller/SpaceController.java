@@ -1,13 +1,13 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.dalesbred.Database;
 import org.json.*;
 import spark.*;
+
+import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SpaceController {
   private static final Set<String> DEFINED_ROLES =
@@ -46,14 +46,17 @@ public class SpaceController {
           "INSERT INTO spaces(space_id, name, owner) " +
               "VALUES(?, ?, ?);", spaceId, spaceName, owner);
 
+      var expiry = Duration.ofDays(100000);
       var uri = capabilityController.createUri(request,
-              "/spaces/" + spaceId, "rwd");
+              "/spaces/" + spaceId, "rwd", expiry);
       var messagesUri = capabilityController.createUri(request,
-              "/spaces/" + spaceId + "/messages", "rwd");
+              "/spaces/" + spaceId + "/messages", "rwd", expiry);
       var messagesReadWriteUri = capabilityController.createUri(
-              request, "/spaces/" + spaceId + "/messages", "rw");
+              request, "/spaces/" + spaceId + "/messages", "rw",
+              expiry);
       var messagesReadOnlyUri = capabilityController.createUri(
-              request, "/spaces/" + spaceId + "/messages", "r");
+              request, "/spaces/" + spaceId + "/messages", "r",
+              expiry);
 
       response.status(201);
       response.header("Location", uri.toASCIIString());
@@ -95,9 +98,11 @@ public class SpaceController {
 
       response.status(201);
       var uri = capabilityController.createUri(request,
-              "/spaces/" + spaceId + "/messages/" + msgId, "rd");
+              "/spaces/" + spaceId + "/messages/" + msgId, "rd",
+              Duration.ofMinutes(5));
       var readOnlyUri = capabilityController.createUri(request,
-              "/spaces/" + spaceId + "/messages/" + msgId, "r");
+              "/spaces/" + spaceId + "/messages/" + msgId, "r",
+              Duration.ofDays(365));
 
       response.header("Location", uri.toASCIIString());
       return new JSONObject()
@@ -136,7 +141,8 @@ public class SpaceController {
     response.status(200);
     return new JSONArray(messages.stream()
         .map(msgId -> "/spaces/" + spaceId + "/messages/" + msgId)
-        .map(path -> capabilityController.createUri(request, path, perms))
+        .map(path ->
+                capabilityController.createUri(request, path, perms, Duration.ofMinutes(10)))
         .collect(Collectors.toList()));
   }
 

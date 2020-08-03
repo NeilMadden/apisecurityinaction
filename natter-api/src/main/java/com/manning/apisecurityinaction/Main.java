@@ -44,7 +44,7 @@ public class Main {
         var encKey = keyStore.getKey("aes-key", keyPassword);
 
         var capController = new CapabilityController(
-                new MacaroonTokenStore(new JsonTokenStore(), macKey));
+                new DatabaseTokenStore(database));
         var spaceController = new SpaceController(database, capController);
         var userController = new UserController(database);
         var auditController = new AuditController(database);
