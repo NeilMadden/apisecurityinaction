@@ -10,7 +10,6 @@ import org.json.*;
 import spark.*;
 
 import java.io.FileInputStream;
-import java.net.URI;
 import java.nio.file.*;
 import java.security.KeyStore;
 import java.util.Set;
@@ -77,11 +76,6 @@ public class Main {
             response.header("Server", "");
         });
 
-
-        var clientId = "testClient";
-        var clientSecret = "60ho9IS3d6/A+Zzvdn9Y4laiGnI/1TddTM95lEHjArw=";
-        var introspectionEndpoint =
-                URI.create("https://as.example.com:8443/oauth2/introspect");
         SecureTokenStore tokenStore = new CookieTokenStore();
         var tokenController = new TokenController(tokenStore);
 

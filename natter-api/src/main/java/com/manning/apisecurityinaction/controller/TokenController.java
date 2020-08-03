@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import static java.time.Instant.now;
-
 import static spark.Spark.halt;
 
 public class TokenController {
@@ -43,10 +42,11 @@ public class TokenController {
     }
 
     public void validateToken(Request request, Response response) {
-        var tokenId = request.headers("X-CSRF-Token");
-        if (tokenId == null) {
+        var tokenId = request.headers("Authorization");
+        if (tokenId == null || !tokenId.startsWith("Bearer ")) {
             return;
         }
+        tokenId = tokenId.substring(7);
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             if (now().isBefore(token.expiry)) {
