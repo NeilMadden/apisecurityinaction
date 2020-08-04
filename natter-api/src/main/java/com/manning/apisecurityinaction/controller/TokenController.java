@@ -43,9 +43,10 @@ public class TokenController {
 
     public void validateToken(Request request, Response response) {
         var tokenId = request.headers("Authorization");
-        if (tokenId != null && tokenId.startsWith("Bearer ")) {
-            tokenId = tokenId.substring(7);
+        if (tokenId == null || !tokenId.startsWith("Bearer ")) {
+            return;
         }
+        tokenId = tokenId.substring(7);
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             if (now().isBefore(token.expiry)) {
