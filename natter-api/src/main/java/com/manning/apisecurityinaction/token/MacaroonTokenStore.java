@@ -1,21 +1,31 @@
 package com.manning.apisecurityinaction.token;
 
+import com.github.nitram509.jmacaroons.*;
+import com.github.nitram509.jmacaroons.verifier.TimestampCaveatVerifier;
+import spark.Request;
+
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-import com.github.nitram509.jmacaroons.*;
-import com.github.nitram509.jmacaroons.verifier.TimestampCaveatVerifier;
-import spark.Request;
-
 public class MacaroonTokenStore implements SecureTokenStore {
     private final TokenStore delegate;
     private final Key macKey;
 
-    public MacaroonTokenStore(TokenStore delegate, Key macKey) {
+    private MacaroonTokenStore(TokenStore delegate, Key macKey) {
         this.delegate = delegate;
         this.macKey = macKey;
+    }
+
+    public static SecureTokenStore wrap(
+            ConfidentialTokenStore tokenStore, Key macKey) {
+        return new MacaroonTokenStore(tokenStore, macKey);
+    }
+
+    public static AuthenticatedTokenStore wrap(
+            TokenStore tokenStore, Key macKey) {
+        return new MacaroonTokenStore(tokenStore, macKey);
     }
 
     @Override
@@ -23,13 +33,6 @@ public class MacaroonTokenStore implements SecureTokenStore {
         var identifier = delegate.create(request, token);
         var macaroon = MacaroonsBuilder.create("",
                 macKey.getEncoded(), identifier);
-
-        if (token.expiry != Instant.MAX) {
-            macaroon = MacaroonsBuilder.modify(macaroon)
-                    .add_first_party_caveat("time < " + token.expiry)
-                    .getMacaroon();
-        }
-
         return macaroon.serialize();
     }
 

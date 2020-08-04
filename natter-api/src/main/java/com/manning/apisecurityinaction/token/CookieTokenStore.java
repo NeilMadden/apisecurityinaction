@@ -1,10 +1,10 @@
 package com.manning.apisecurityinaction.token;
 
+import spark.Request;
+
 import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.util.*;
-
-import spark.Request;
+import java.util.Optional;
 
 public class CookieTokenStore implements SecureTokenStore {
 
@@ -29,13 +29,6 @@ public class CookieTokenStore implements SecureTokenStore {
 
         var session = request.session(false);
         if (session == null) {
-            return Optional.empty();
-        }
-
-        var provided = Base64url.decode(tokenId);
-        var computed = sha256(session.id());
-
-        if (!MessageDigest.isEqual(computed, provided)) {
             return Optional.empty();
         }
 

@@ -2,6 +2,8 @@ CREATE TABLE users(
     user_id VARCHAR(30) PRIMARY KEY,
     pw_hash VARCHAR(255)
 );
+INSERT INTO users(user_id, pw_hash)
+    VALUES('demo', '$s0$f0801$FNT5t8/4B9xV2uMUxBg4Bg==$Xlok7jXqS6Y1IE97KCzwCmoTFUakDp1UfTY5aEV545k=');
 CREATE TABLE group_members(
     group_id VARCHAR(30),
     user_id VARCHAR(30) REFERENCES users(user_id)
