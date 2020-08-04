@@ -8,10 +8,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import static java.time.Instant.now;
-
 import static spark.Spark.halt;
 
 public class TokenController {
+    private static final String DEFAULT_SCOPES =
+            "create_space post_message read_message list_messages " +
+                    "delete_message add_member";
 
     private final SecureTokenStore tokenStore;
 
@@ -24,11 +26,8 @@ public class TokenController {
         var expiry = now().plus(10, ChronoUnit.MINUTES);
 
         var token = new TokenStore.Token(expiry, subject);
-
-        var scope = request.queryParams("scope");
-        if (scope != null) {
-            token.attributes.put("scope", scope);
-        }
+        var scope = request.queryParamOrDefault("scope", DEFAULT_SCOPES);
+        token.attributes.put("scope", scope);
 
         var role = request.queryParams("role");
         if (role != null) {
@@ -43,10 +42,11 @@ public class TokenController {
     }
 
     public void validateToken(Request request, Response response) {
-        var tokenId = request.headers("X-CSRF-Token");
-        if (tokenId == null) {
+        var tokenId = request.headers("Authorization");
+        if (tokenId == null || !tokenId.startsWith("Bearer ")) {
             return;
         }
+        tokenId = tokenId.substring(7);
 
         tokenStore.read(request, tokenId).ifPresent(token -> {
             if (now().isBefore(token.expiry)) {
@@ -63,7 +63,8 @@ public class TokenController {
 
     public Filter requireScope(String method, String requiredScope) {
         return (request, response) -> {
-            if (!method.equals(request.requestMethod())) return;
+            if (!method.equalsIgnoreCase(request.requestMethod()))
+                return;
 
             var tokenScope = request.<String>attribute("scope");
             if (tokenScope == null) return;
