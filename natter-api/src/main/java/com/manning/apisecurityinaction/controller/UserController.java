@@ -1,15 +1,15 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.io.*;
-import java.net.URLDecoder;
-import java.security.cert.*;
-import java.util.Base64;
-
 import com.lambdaworks.crypto.SCryptUtil;
 import org.dalesbred.Database;
 import org.dalesbred.query.QueryBuilder;
 import org.json.JSONObject;
 import spark.*;
+
+import java.io.ByteArrayInputStream;
+import java.net.URLDecoder;
+import java.security.cert.*;
+import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Spark.halt;
@@ -160,7 +160,7 @@ public class UserController {
 
     public Filter requirePermission(String method, String permission) {
         return (request, response) -> {
-            if (!method.equals(request.requestMethod())) {
+            if (!method.equalsIgnoreCase(request.requestMethod())) {
                 return;
             }
 

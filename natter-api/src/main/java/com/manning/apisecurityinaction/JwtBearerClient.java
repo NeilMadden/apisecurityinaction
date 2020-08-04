@@ -1,5 +1,10 @@
 package com.manning.apisecurityinaction;
 
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.*;
+
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.http.*;
@@ -7,13 +12,9 @@ import java.security.KeyStore;
 import java.security.interfaces.ECPrivateKey;
 import java.util.*;
 
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.jwk.*;
-import com.nimbusds.jwt.*;
-
 import static java.time.Instant.now;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static spark.Spark.*;
 
 public class JwtBearerClient {
 
@@ -22,16 +23,23 @@ public class JwtBearerClient {
         var keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(new FileInputStream("keystore.p12"),
                 password);
-        var privateKey = (ECPrivateKey) keyStore.getKey("es256-key",
-                password);
+        var privateKey = (ECPrivateKey)
+                keyStore.getKey("es256-key", password);
 
-        var jwk = ECKey.load(keyStore, "es256-key", password);
-        System.out.println("JWK Set:");
-        System.out.println(new JWKSet(jwk.toPublicJWK()));
+        var jwkSet = JWKSet.load(keyStore, alias -> password)
+                .toPublicJWKSet();
+
+        secure("localhost.p12", "changeit", null, null);
+        get("/jwks", (request, response) -> {
+            response.type("application/jwk-set+json");
+            return jwkSet.toString();
+        });
 
         var clientId = "test";
-        var as = "https://as.example.com/access_token";
-        var header = new JWSHeader(JWSAlgorithm.ES256);
+        var as = "http://as.example.com:8080/oauth2/access_token";
+        var header = new JWSHeader.Builder(JWSAlgorithm.ES256)
+                .keyID("es256-key")
+                .build();
         var claims = new JWTClaimsSet.Builder()
                 .subject(clientId)
                 .issuer(clientId)
@@ -42,9 +50,8 @@ public class JwtBearerClient {
         var jwt = new SignedJWT(header, claims);
         jwt.sign(new ECDSASigner(privateKey));
         var assertion = jwt.serialize();
-        System.out.println("Assertion: " + assertion);
 
-        var form = "grant_type=client_credentials&scope=a+b+c" +
+        var form = "grant_type=client_credentials&scope=create_space" +
                 "&client_assertion_type=" +
         "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" +
                 "&client_assertion=" + assertion;
