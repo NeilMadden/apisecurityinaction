@@ -2,13 +2,16 @@
 
 This repository contains source code to accompany the upcoming book
 API Security in Action, written by Neil Madden and to be published by
-Manning Publications some time next year. If you have stumbled across
+Manning Publications in October 2020. If you have stumbled across
 this repository by accident, it is unlikely to make much sense on its
 own at this stage. Please see [Manning's website](https://www.manning.com/books/api-security-in-action?a_aid=api_security_in_action&a_bid=6806e3b6)
 for early access.
 
+**Note: there is no source code on the main branch.** You need to check
+out the branch for the chapter you are reading.
+
 The git repo is organized with a separate branch for each chapter,
-starting with Chapter 2. Actually there are two (or more) branches
+starting with Chapter 2. Actually there are two branches
 per chapter. The branches called "chapter02", "chapter03" etc will
 give you the source code as needed for starting out on the given chapter.
 The branches named "chapter02-end", "chapter03-end" etc give the
