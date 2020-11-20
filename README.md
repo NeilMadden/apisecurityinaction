@@ -1,11 +1,11 @@
 # API Security in Action
 
-This repository contains source code to accompany the upcoming book
-API Security in Action, written by Neil Madden and to be published by
-Manning Publications in October 2020. If you have stumbled across
-this repository by accident, it is unlikely to make much sense on its
-own at this stage. Please see [Manning's website](https://www.manning.com/books/api-security-in-action?a_aid=api_security_in_action&a_bid=6806e3b6)
-for early access.
+This repository contains source code that accompanies the book
+*API Security in Action*, written by Neil Madden and published by
+Manning Publications in November 2020.
+Please see [Manning's website](https://www.manning.com/books/api-security-in-action?a_aid=api_security_in_action&a_bid=6806e3b6)
+for information on purchasing a copy, or its available from Amazon
+and other retailers.
 
 **Note: there is no source code on the main branch.** You need to check
 out the branch for the chapter you are reading.
@@ -19,8 +19,9 @@ final source code after all the alterations in that chapter. Typically
 the source code at the end of a chapter is also identical to the start
 of the next chapter.
 
-The source code can also be downloaded as a zip file from the early
-access website.
+**I strongly recommend working through the code listings from the book.**
+
+The source code can also be downloaded as a zip file from Manning's website.
 
 ## Prerequisites
 
@@ -43,6 +44,12 @@ descriptions for HTTP requests that can be used.
 
 Chapter 10 and onwards have more detailed requirements to run the sample code.
 Please consult the book for exact instructions.
+
+## Postman
+
+I've created a [Postman](https://www.postman.com) collection to help you perform operations using the API developed
+during the book as an alternative to curl. You can import the collection from this url:
+https://www.postman.com/collections/ef49c7f5cba0737ecdfd
 
 ## Chapters
 
