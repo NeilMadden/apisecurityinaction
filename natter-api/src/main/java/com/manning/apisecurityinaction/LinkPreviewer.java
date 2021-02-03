@@ -93,9 +93,10 @@ public class LinkPreviewer {
     }
 
     private static boolean isUniqueLocalAddress(InetAddress ipAddr) {
+        // Note: this updated implementation differs from the published book
+        // to fix an error: https://github.com/NeilMadden/apisecurityinaction/issues/10
         return ipAddr instanceof Inet6Address &&
-                (ipAddr.getAddress()[0] & 0xFF) == 0xFD &&
-                (ipAddr.getAddress()[1] & 0xFF) == 0X00;
+                (ipAddr.getAddress()[0] & 0xFE) == 0xFC;
     }
 
     private static <T extends Exception> ExceptionHandler<T>
