@@ -1,6 +1,8 @@
 package com.manning.apisecurityinaction.controller;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -19,22 +21,17 @@ public class DroolsAccessController extends ABACAccessController {
                            Map<String, Object> action,
                            Map<String, Object> env) {
 
-        var session = kieContainer.newKieSession();
-        try {
-            var decision = new Decision();
-            session.setGlobal("decision", decision);
+        var session = kieContainer.newStatelessKieSession();
+        var decision = new Decision();
+        session.setGlobal("decision", decision);
 
-            session.insert(new Subject(subject));
-            session.insert(new Resource(resource));
-            session.insert(new Action(action));
-            session.insert(new Environment(env));
+        session.execute(List.of(
+                new Subject(subject),
+                new Resource(resource),
+                new Action(action),
+                new Environment(env)));
 
-            session.fireAllRules();
-            return decision.isPermitted();
-
-        } finally {
-            session.dispose();
-        }
+        return decision.isPermitted();
     }
 
     public static class Subject extends HashMap<String, Object> {
