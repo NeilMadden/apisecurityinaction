@@ -32,7 +32,9 @@ public class OAuth2TokenStore implements SecureTokenStore {
                 .encodeToString(credentials.getBytes(UTF_8));
 
         var sslParams = new SSLParameters();
-        sslParams.setProtocols(new String[] {
+        sslParams.setProtocols(
+                new String[] { "TLSv1.3", "TLSv1.2" });
+        sslParams.setCipherSuites(new String[] {
                 // TLS 1.3 cipher suites
                 "TLS_AES_128_GCM_SHA256",
                 "TLS_AES_256_GCM_SHA384",
