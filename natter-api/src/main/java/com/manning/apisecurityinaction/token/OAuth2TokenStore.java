@@ -1,19 +1,22 @@
 package com.manning.apisecurityinaction.token;
 
-import javax.net.ssl.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.*;
 import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.security.*;
+import java.security.cert.*;
 import java.time.Instant;
 import java.util.*;
 
-import org.json.JSONObject;
-import spark.Request;
+import javax.net.ssl.*;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.json.JSONObject;
+
+import spark.Request;
 
 public class OAuth2TokenStore implements SecureTokenStore {
 
@@ -57,7 +60,23 @@ public class OAuth2TokenStore implements SecureTokenStore {
                     new FileInputStream("as.example.com.ca.p12"),
                     "changeit".toCharArray());
             var tmf = TrustManagerFactory.getInstance("PKIX");
-            tmf.init(trustedCerts);
+            // Enable revocation checking (not in the book).
+            var pkixParams = new PKIXBuilderParameters(trustedCerts, null);
+            // You can either set pkixParams.setRevocationEnabled(true) to use
+            // the default revocation mechanisms configured in java.security.
+            // Here, we explicitly configure a revocation checker to ensure OCSP
+            // is turned on (it's off by default). If your CA doesn't support
+            // revocation checking and you can't fix that (!), then you should
+            // instead call pkixParams.setRevocationChecking(false) and
+            // comment out the following code that adds the revocation checker.
+            var revocationChecker =
+                    (PKIXRevocationChecker) CertPathValidator.getInstance("PKIX")
+                            .getRevocationChecker();
+            // You can configure default OCSP responder URI and other options
+            // using setters on the revocationChecker if required.
+            pkixParams.addCertPathChecker(revocationChecker);
+            var tmParams = new CertPathTrustManagerParameters(pkixParams);
+            tmf.init(tmParams);
             var sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, tmf.getTrustManagers(), null);
 
